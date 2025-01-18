@@ -1,19 +1,40 @@
 import 'dotenv/config';
-import { TokenManager } from './dist/index.js';
+import { Tokenly } from './dist/index.js';
 
-const manager = new TokenManager();
+// Usage example
+const tokenly = new Tokenly({
+  accessTokenExpiry: '15m',
+  refreshTokenExpiry: '7d',
+  cookieOptions: {
+    secure: true,
+    httpOnly: true,
+    sameSite: 'strict',
+    domain: '.yourdomain.com',
+    path: '/api',
+  },
+  jwtOptions: {
+    algorithm: 'HS512',
+    issuer: 'tokenly',
+    audience: 'api',
+  },
+});
 
-// Prueba el token access
-const payload = { userId: 1, email: 'test@example.com' };
-const token = manager.generateAccessToken(payload);
-console.log('Token generado:', token);
+// Test payload
+const payload = {
+  userId: 1,
+  email: 'test@example.com',
+  roles: ['user'],
+};
 
-const decoded = manager.verifyAccessToken(token);
-console.log('Token decodificado:', decoded);
+// Generate initial tokens
+const accessToken = tokenly.generateAccessToken(payload);
+const refreshToken = tokenly.generateRefreshToken(payload);
 
-// Prueba el token refresh
-const refreshToken = manager.generateRefreshToken(payload);
-console.log('Token refresh generado:', refreshToken);
+console.log('Access Token:', accessToken);
+console.log('Refresh Token (with cookie config):', refreshToken);
 
-const decodedRefresh = manager.verifyRefreshToken(refreshToken);
-console.log('Token refresh decodificado:', decodedRefresh);
+// Example of token rotation
+const { accessToken: newAccess, refreshToken: newRefresh } = tokenly.rotateTokens(refreshToken.raw);
+
+console.log('New Access Token:', newAccess);
+console.log('New Refresh Token:', newRefresh);

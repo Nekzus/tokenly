@@ -1,3 +1,3 @@
-import { TokenManager } from "./tokenManager.js";
+import { Tokenly } from './tokenManager.js';
 
-export { TokenManager };
+export { Tokenly };

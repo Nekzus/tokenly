@@ -31,7 +31,9 @@
 		"typescript": "5.7.3",
 		"vitest": "3.0.2",
 		"@commitlint/cli": "^19.6.1",
-		"@commitlint/config-conventional": "^19.6.0"
+		"@commitlint/config-conventional": "^19.6.0",
+		"@commitlint/cz-commitlint": "^19.6.1",
+		"commitizen": "^4.3.1"
 	},
 	"dependencies": {
 		"jsonwebtoken": "9.0.2"
@@ -70,7 +72,7 @@
 	"homepage": "https://github.com/your-username/tokenly#readme",
 	"config": {
 		"commitizen": {
-			"path": "./node_modules/cz-conventional-changelog"
+			"path": "@commitlint/cz-commitlint"
 		}
 	},
 	"publishConfig": {

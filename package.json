@@ -1,0 +1,30 @@
+{
+	"name": "tokenly",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"test": "vitest",
+		"lint": "biome lint --write",
+		"format": "biome format --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/jsonwebtoken": "9.0.7",
+		"@types/node": "22.10.7",
+		"dotenv": "16.4.7",
+		"typescript": "5.7.3",
+		"vitest": "3.0.2"
+	},
+	"dependencies": {
+		"jsonwebtoken": "9.0.2"
+	}
+}

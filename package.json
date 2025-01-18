@@ -1,7 +1,7 @@
 {
-	"name": "tokenly",
-	"version": "1.0.0",
-	"description": "Secure JWT token manager with HttpOnly cookie support for modern web applications",
+	"name": "@nekzus/tokenly",
+	"version": "0.0.0-development",
+	"description": "A secure JWT token manager with HttpOnly cookie support for modern web applications",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -13,71 +13,66 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"clean": "rimraf dist",
-		"prebuild": "npm run clean",
+		"prepare": "husky install",
+		"lint": "biome check . --write --files-ignore-unknown=true",
+		"format": "biome format . --write --files-ignore-unknown=true",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
-		"lint": "biome check . --apply --files-ignore-unknown=true",
-		"lint:fix": "biome check --apply .",
-		"format": "biome format . --write --files-ignore-unknown=true",
-		"format:fix": "biome format --write .",
-		"prepare": "husky install",
-		"commit": "cz"
+		"commit": "git-cz",
+		"semantic-release": "semantic-release --branches main"
 	},
-	"config": {
-		"commitizen": {
-			"path": "cz-conventional-changelog"
-		}
+	"devDependencies": {
+		"@types/jsonwebtoken": "9.0.7",
+		"@types/node": "22.10.7",
+		"@biomejs/biome": "1.9.4",
+		"cz-conventional-changelog": "3.3.0",
+		"husky": "9.1.7",
+		"semantic-release": "24.2.1",
+		"typescript": "5.7.3",
+		"vitest": "3.0.2",
+		"@commitlint/cli": "^19.6.1",
+		"@commitlint/config-conventional": "^19.6.0"
 	},
+	"dependencies": {
+		"jsonwebtoken": "9.0.2"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"files": [
+		"dist"
+	],
 	"keywords": [
-		"tokenly",
 		"jwt",
 		"token",
 		"authentication",
+		"authorization",
+		"cookie",
 		"httponly",
 		"security",
-		"cookie",
-		"refresh-token",
-		"access-token",
-		"oauth"
+		"typescript",
+		"oauth",
+		"refresh token",
+		"access token"
 	],
-	"author": "Your Name",
+	"author": "your-name",
 	"license": "MIT",
+	"directories": {
+		"test": "tests"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/yourusername/tokenly.git"
+		"url": "https://github.com/your-username/tokenly.git"
 	},
 	"bugs": {
-		"url": "https://github.com/yourusername/tokenly/issues"
+		"url": "https://github.com/your-username/tokenly/issues"
 	},
-	"homepage": "https://github.com/yourusername/tokenly#readme",
-	"devDependencies": {
-		"@biomejs/biome": "1.5.3",
-		"@commitlint/cli": "19.6.1",
-		"@commitlint/config-conventional": "19.6.0",
-		"@types/jsonwebtoken": "^9.0.0",
-		"@types/node": "^20.0.0",
-		"@vitest/coverage-v8": "^1.0.0",
-		"commitizen": "^4.3.0",
-		"cz-conventional-changelog": "^3.3.0",
-		"dotenv": "^16.0.0",
-		"husky": "8.0.3",
-		"rimraf": "^5.0.0",
-		"typescript": "^5.0.0",
-		"vitest": "^1.0.0"
+	"homepage": "https://github.com/your-username/tokenly#readme",
+	"config": {
+		"commitizen": {
+			"path": "./node_modules/cz-conventional-changelog"
+		}
 	},
-	"dependencies": {
-		"jsonwebtoken": "^9.0.0"
-	},
-	"engines": {
-		"node": ">=18.0.0"
-	},
-	"engineStrict": true,
-	"files": [
-		"dist",
-		"LICENSE",
-		"README.md"
-	],
 	"publishConfig": {
 		"access": "public"
 	}

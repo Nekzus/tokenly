@@ -1,5 +1,7 @@
 import 'dotenv/config';
-import { Tokenly } from './dist/index.js';
+import { Tokenly } from './dist/index.esm.js';
+
+
 
 // Usage example
 const tokenly = new Tokenly({

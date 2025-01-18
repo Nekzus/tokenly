@@ -17,9 +17,9 @@
 		"prebuild": "npm run clean",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
-		"lint": "biome check src/ --apply",
+		"lint": "biome check . --apply --files-ignore-unknown=true",
 		"lint:fix": "biome check --apply .",
-		"format": "biome format src/ --write",
+		"format": "biome format . --write --files-ignore-unknown=true",
 		"format:fix": "biome format --write .",
 		"prepare": "husky install",
 		"commit": "cz"

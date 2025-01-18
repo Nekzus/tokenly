@@ -104,7 +104,7 @@ describe('Tokenly', () => {
       const newPayload = { userId: '123', role: 'admin' };
       const refreshToken = tokenly.generateRefreshToken(originalPayload);
 
-      const { accessToken, refreshToken: newRefreshToken } = tokenly.rotateTokens(
+      const { accessToken } = tokenly.rotateTokens(
         refreshToken.raw,
         newPayload
       );

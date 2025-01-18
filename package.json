@@ -8,9 +8,9 @@
 	"types": "dist/index.d.ts",
 	"exports": {
 		".": {
+			"types": "./dist/index.d.ts",
 			"import": "./dist/index.esm.js",
-			"require": "./dist/index.js",
-			"types": "./dist/index.d.ts"
+			"require": "./dist/index.js"
 		  }
 	},
 	"engines": {
@@ -45,7 +45,8 @@
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"commit": "git-cz",
-		"semantic-release": "semantic-release --branches main"
+		"semantic-release": "semantic-release --branches main",
+		"test:ts": "node --loader ts-node/esm --experimental-specifier-resolution=node test.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
@@ -61,7 +62,8 @@
 		"rollup-plugin-dts": "6.1.1",
 		"semantic-release": "24.2.1",
 		"typescript": "5.7.3",
-		"vitest": "3.0.2"
+		"vitest": "3.0.2",
+		"ts-node": "10.9.2"
 	},
 	"directories": {
 		"test": "tests"

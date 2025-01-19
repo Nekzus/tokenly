@@ -1,95 +1,95 @@
 {
-	"name": "@nekzus/tokenly",
-	"version": "0.0.0-development",
-	"description": "A secure JWT token manager with HttpOnly cookie support for modern web applications",
-	"type": "module",
-	"main": "dist/index.cjs",
-	"module": "dist/index.js",
-	"browser": "dist/index.umd.js",
-	"types": "dist/types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/types/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
-		}
-	},
-	"engines": {
-		"node": ">=18"
-	},
-	"files": [
-		"dist"
-	],
-	"keywords": [
-		"jwt",
-		"token",
-		"authentication",
-		"authorization",
-		"cookie",
-		"httponly",
-		"security",
-		"typescript",
-		"oauth",
-		"refresh token",
-		"access token"
-	],
-	"author": "your-name",
-	"license": "MIT",
-	"dependencies": {
-		"jsonwebtoken": "9.0.2",
-		"uuid": "11.0.5"
-	},
-	"scripts": {
-		"build": "rollup -c",
-		"dev": "rollup -c -w",
-		"lint": "biome check . --write --files-ignore-unknown=true",
-		"format": "biome format . --write --files-ignore-unknown=true",
-		"test": "vitest run",
-		"test:js": "node test.js",
-		"test:watch": "vitest",
-		"test:coverage": "vitest run --coverage",
-		"commit": "git-cz",
-		"semantic-release": "semantic-release --branches main",
-		"test:ts": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' test.ts"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@rollup/plugin-commonjs": "28.0.2",
-		"@rollup/plugin-json": "6.1.0",
-		"@rollup/plugin-node-resolve": "16.0.0",
-		"@rollup/plugin-terser": "0.4.4",
-		"@rollup/plugin-typescript": "12.1.2",
-		"@semantic-release/changelog": "6.0.3",
-		"@semantic-release/git": "10.0.1",
-		"@types/jsonwebtoken": "9.0.7",
-		"@types/node": "22.10.7",
-		"cz-conventional-changelog": "3.3.0",
-		"dotenv": "16.4.7",
-		"rollup": "4.30.1",
-		"rollup-plugin-dts": "6.1.1",
-		"rollup-plugin-polyfill-node": "0.13.0",
-		"semantic-release": "24.2.1",
-		"ts-node": "10.9.2",
-		"typescript": "5.7.3",
-		"vitest": "3.0.2"
-	},
-	"directories": {
-		"test": "tests"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Nekzus/tokenly.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Nekzus/tokenly/issues"
-	},
-	"homepage": "https://github.com/Nekzus/tokenly#readme",
-	"config": {
-		"commitizen": {
-			"path": "./node_modules/cz-conventional-changelog"
-		}
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@nekzus/tokenly",
+  "version": "0.0.0-development",
+  "description": "A secure JWT token manager with HttpOnly cookie support for modern web applications",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "browser": "dist/index.umd.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "jwt",
+    "token",
+    "authentication",
+    "authorization",
+    "cookie",
+    "httponly",
+    "security",
+    "typescript",
+    "oauth",
+    "refresh token",
+    "access token"
+  ],
+  "author": "nekzus",
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "9.0.2",
+    "uuid": "11.0.5"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "biome check . --write --files-ignore-unknown=true",
+    "format": "biome format . --write --files-ignore-unknown=true",
+    "test": "vitest run",
+    "test:js": "node test.js",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release --branches main",
+    "test:ts": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' test.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@rollup/plugin-commonjs": "28.0.2",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.0",
+    "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "12.1.2",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/git": "10.0.1",
+    "@types/jsonwebtoken": "9.0.7",
+    "@types/node": "22.10.7",
+    "cz-conventional-changelog": "3.3.0",
+    "dotenv": "16.4.7",
+    "rollup": "4.30.1",
+    "rollup-plugin-dts": "6.1.1",
+    "rollup-plugin-polyfill-node": "0.13.0",
+    "semantic-release": "24.2.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.7.3",
+    "vitest": "3.0.2"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nekzus/tokenly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nekzus/tokenly/issues"
+  },
+  "homepage": "https://github.com/Nekzus/tokenly#readme",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

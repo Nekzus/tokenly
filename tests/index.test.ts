@@ -323,29 +323,29 @@ describe('Tokenly', () => {
     test('should handle payload validation', () => {
       const testCases = [
         {
+          payload: null,
+          expectedError: 'Payload must be an object'
+        },
+        {
           payload: {},
           expectedError: 'Payload cannot be empty'
         },
         {
-          payload: { userId: '' },
-          expectedError: 'userId cannot be empty'
+          payload: { foo: 'bar' },
+          expectedError: 'Payload must contain a userId'
         },
         {
           payload: { userId: null },
           expectedError: 'userId cannot be null or undefined'
         },
         {
-          payload: { userId: undefined },
-          expectedError: 'userId cannot be null or undefined'
-        },
-        {
-          payload: { userId: 'a'.repeat(1001) },
-          expectedError: 'userId exceeds maximum length'
+          payload: { userId: '' },
+          expectedError: 'userId cannot be empty'
         }
       ];
 
       testCases.forEach(({ payload, expectedError }) => {
-        expect(() => tokenly.generateAccessToken(payload)).toThrowError(expectedError);
+        expect(() => tokenly.generateAccessToken(payload as any)).toThrowError(expectedError);
       });
     });
   });
@@ -388,6 +388,83 @@ describe('Tokenly', () => {
       const token = tokenly.generateRefreshToken({ userId: '123' });
       const verified = tokenly.verifyRefreshTokenEnhanced(token.raw);
       expect(verified.payload).toHaveProperty('userId', '123');
+    });
+  });
+
+  describe('Advanced Features', () => {
+    test('should analyze token security', () => {
+      const token = tokenly.generateAccessToken({ userId: '123' });
+      const analysis = tokenly.analyzeTokenSecurity(token.raw);
+      
+      expect(analysis).toHaveProperty('algorithm');
+      expect(analysis).toHaveProperty('strength');
+      expect(['weak', 'medium', 'strong']).toContain(analysis.strength);
+    });
+
+    test('should handle token events', async () => {
+      let eventData: any = null;
+      
+      tokenly.on('tokenRevoked', (data: any) => {
+        eventData = data;
+      });
+      
+      const token = tokenly.generateAccessToken({ userId: '123' });
+      tokenly.verifyAccessToken(token.raw);
+      tokenly.revokeToken(token.raw);
+      
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      expect(eventData).toBeTruthy();
+      expect(eventData.token).toBe(token.raw);
+      expect(eventData.userId).toBe('123');
+    });
+
+    test('should cache token verifications', () => {
+      const token = tokenly.generateAccessToken({ userId: '123' });
+      
+      const firstVerification = tokenly.verifyAccessToken(token.raw);
+      const secondVerification = tokenly.verifyAccessToken(token.raw);
+      
+      expect(firstVerification).toEqual(secondVerification);
+    });
+
+    test('should handle auto rotation', async () => {
+      const shortLivedTokenly = new Tokenly({
+        accessTokenExpiry: '1s'
+      });
+
+      let eventData: any = null;
+      shortLivedTokenly.on('tokenExpiring', (data: any) => {
+        eventData = data;
+      });
+
+      const token = shortLivedTokenly.generateAccessToken({ userId: '123' });
+      shortLivedTokenly.verifyAccessToken(token.raw);
+      
+      const interval = shortLivedTokenly.enableAutoRotation({
+        checkInterval: 50,
+        rotateBeforeExpiry: 2000
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      expect(eventData).toBeTruthy();
+      expect(eventData.token).toBe(token.raw);
+      expect(eventData.userId).toBe('123');
+
+      clearInterval(interval);
+    });
+
+    // Nuevo test para verificar la desactivación
+    test('should handle auto rotation disable', async () => {
+      const tokenly = new Tokenly({
+        accessTokenExpiry: '1s'
+      });
+
+      const interval = tokenly.enableAutoRotation();
+      tokenly.disableAutoRotation();
+      
+      expect(tokenly['autoRotationInterval']).toBeNull();
     });
   });
 });

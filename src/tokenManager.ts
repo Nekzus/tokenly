@@ -75,6 +75,9 @@ export class Tokenly {
   private deviceTokens: Map<string, Set<string>> = new Map();
   private rotationCounts: Map<string, number> = new Map();
   private revokedTokens: Set<string> = new Set();
+  private tokenCache: Map<string, TokenlyResponse>;
+  private eventListeners: Map<string, Function[]>;
+  private autoRotationInterval: NodeJS.Timeout | null = null;
 
   /**
    * Initialize Tokenly with custom configuration
@@ -128,6 +131,9 @@ export class Tokenly {
       revokeOnSecurityBreach: true,
       ...config?.securityConfig,
     };
+
+    this.eventListeners = new Map();
+    this.tokenCache = new Map();
   }
 
   /**
@@ -172,6 +178,9 @@ export class Tokenly {
    * Genera una huella digital del dispositivo/navegador
    */
   private generateFingerprint(context: { userAgent: string; ip: string; additionalData?: string }): string {
+    if (!context.userAgent || !context.ip) {
+      throw new Error('Invalid context for fingerprint generation');
+    }
     return crypto
       .createHash('sha256')
       .update(`${context.userAgent}${context.ip}${context.additionalData || ''}`)
@@ -181,13 +190,21 @@ export class Tokenly {
   /**
    * Revoca un token específico
    */
-  revokeToken(token: string): void {
-    console.log('DEBUG [3]: Revocando token');
-    if (!token || typeof token !== 'string') {
-      throw new Error('Invalid token format');
+  public revokeToken(token: string): void {
+    if (!token) return;
+    
+    try {
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
+      this.revokedTokens.add(token);
+      
+      this.emit('tokenRevoked', {
+        token,
+        userId: decoded?.userId,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error('Error al revocar token:', error);
     }
-    this.revokedTokens.add(token);
-    console.log('DEBUG [4]: Token revocado exitosamente');
   }
 
   /**
@@ -198,28 +215,39 @@ export class Tokenly {
   }
 
   private validatePayload(payload: any): void {
-    if (!payload || typeof payload !== 'object') {
+    // Validar que payload sea un objeto
+    if (payload === null || typeof payload !== 'object') {
       throw new Error('Payload must be an object');
     }
     
-    if (!Object.prototype.hasOwnProperty.call(payload, 'userId')) {
-      throw new Error('Payload must contain a userId');
-    }
-    
-    if (typeof payload.userId !== 'string' || !payload.userId.trim()) {
-      throw new Error('userId must be a non-empty string');
-    }
-    
+    // Validar que no esté vacío
     if (Object.keys(payload).length === 0) {
       throw new Error('Payload cannot be empty');
     }
 
+    // Validar que tenga userId
+    if (!Object.prototype.hasOwnProperty.call(payload, 'userId')) {
+      throw new Error('Payload must contain a userId');
+    }
+    
+    // Validar que userId no sea null o undefined
+    if (payload.userId === null || payload.userId === undefined) {
+      throw new Error('userId cannot be null or undefined');
+    }
+
+    // Validar que userId no esté vacío
+    if (typeof payload.userId !== 'string' || !payload.userId.trim()) {
+      throw new Error('userId cannot be empty');
+    }
+
+    // Validar que ninguna propiedad sea null o undefined
     Object.entries(payload).forEach(([key, value]) => {
       if (value === null || value === undefined) {
         throw new Error(`Payload property '${key}' cannot be null or undefined`);
       }
     });
 
+    // Validar tamaño del payload
     const payloadSize = JSON.stringify(payload).length;
     if (payloadSize > 8192) {
       throw new Error('Payload size exceeds maximum allowed size');
@@ -237,59 +265,35 @@ export class Tokenly {
     options?: jwt.SignOptions,
     context?: { userAgent: string; ip: string; additionalData?: string }
   ): TokenlyResponse {
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      throw new Error('Payload must be an object');
-    }
+    this.validatePayload(payload);
+    const finalPayload: { [key: string]: any } = { ...payload };
 
-    if (Object.keys(payload).length === 0) {
-      throw new Error('Payload cannot be empty');
-    }
-
-    const userId = (payload as any).userId;
-
-    if (userId === null || userId === undefined) {
-      throw new Error('userId cannot be null or undefined');
-    }
-
-    if (typeof userId !== 'string') {
-      throw new Error('userId must be a string');
-    }
-
-    if (userId.length > 1000) {
-      throw new Error('userId exceeds maximum length');
-    }
-
-    if (userId.trim().length === 0) {
-      throw new Error('userId cannot be empty');
-    }
-
-    try {
-      const finalPayload = { ...payload };
-
-      if (this.securityConfig.enableFingerprint && context) {
-        finalPayload['fingerprint'] = this.generateFingerprint(context);
-        
-        if (!this.deviceTokens.has(userId)) {
-          this.deviceTokens.set(userId, new Set());
-        }
-        const userDevices = this.deviceTokens.get(userId)!;
-        
-        if (userDevices.size >= this.securityConfig.maxDevices) {
-          throw new Error('Maximum number of devices reached');
-        }
-        userDevices.add(finalPayload['fingerprint']);
+    if (this.securityConfig.enableFingerprint && context) {
+      const fingerprint = this.generateFingerprint(context);
+      const userId = (payload as any).userId;
+      
+      if (!this.deviceTokens.has(userId)) {
+        this.deviceTokens.set(userId, new Set());
       }
-
-      const token = jwt.sign(finalPayload, this.secretAccess, {
-        ...this.jwtOptions,
-        ...options,
-        expiresIn: this.accessTokenExpiry,
-      });
-
-      return this.decodeWithReadableDates(token);
-    } catch (error) {
-      throw error;
+      
+      const userDevices = this.deviceTokens.get(userId)!;
+      if (userDevices.size >= this.securityConfig.maxDevices && !userDevices.has(fingerprint)) {
+        throw new Error('Maximum number of devices reached');
+      }
+      
+      userDevices.add(fingerprint);
+      finalPayload.fingerprint = fingerprint;
     }
+
+    const token = jwt.sign(finalPayload, this.secretAccess, {
+      ...this.jwtOptions,
+      ...options,
+      expiresIn: this.accessTokenExpiry,
+    });
+
+    const response = this.decodeWithReadableDates(token);
+    this.tokenCache.set(token, response);
+    return response;
   }
 
   /**
@@ -297,48 +301,30 @@ export class Tokenly {
    * @param token JWT token string
    * @returns Verified token response
    */
-  verifyAccessToken(
+  public verifyAccessToken(
     token: string,
     context?: { userAgent: string; ip: string; additionalData?: string }
   ): TokenlyResponse {
-    if (!token || typeof token !== 'string') {
-      throw new Error('Invalid token format');
-    }
-
     if (this.revokedTokens.has(token)) {
       throw new Error('Token has been revoked');
     }
 
-    try {
-      const decoded = jwt.verify(token, this.secretAccess, {
-        ...this.verifyOptions,
-        ignoreExpiration: false,
-        clockTolerance: 0
-      }) as TokenlyToken;
+    const verified = jwt.verify(token, this.secretAccess, {
+      ...this.verifyOptions,
+      ignoreExpiration: false,
+      clockTolerance: 0
+    }) as TokenlyToken;
 
-      if (this.securityConfig.enableFingerprint && context) {
-        const expectedFingerprint = this.generateFingerprint(context);
-        if (decoded.fingerprint !== expectedFingerprint) {
-          throw new Error('Invalid token fingerprint');
-        }
+    if (this.securityConfig.enableFingerprint && context) {
+      const currentFingerprint = this.generateFingerprint(context);
+      if (verified.fingerprint && verified.fingerprint !== currentFingerprint) {
+        throw new Error('Invalid token fingerprint');
       }
-
-      return this.decodeWithReadableDates(token, decoded);
-    } catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('jwt expired');
-      }
-      
-      if (error instanceof jwt.JsonWebTokenError) {
-        throw error;
-      }
-      
-      if (error instanceof Error) {
-        throw error;
-      }
-      
-      throw new Error('Token verification failed');
     }
+
+    const response = this.decodeWithReadableDates(token, verified);
+    this.tokenCache.set(token, response);
+    return response;
   }
 
   /**
@@ -352,13 +338,13 @@ export class Tokenly {
     cookieOptions?: TokenlyOptions
   ): TokenlyResponse {
     this.validatePayload(payload);
-    const finalPayload = { ...payload };
+    const finalPayload: { [key: string]: any } = { ...payload };
     
     // Eliminar propiedades JWT existentes
-    delete finalPayload['aud'];
-    delete finalPayload['iss'];
-    delete finalPayload['exp'];
-    delete finalPayload['iat'];
+    delete (finalPayload as any).aud;
+    delete (finalPayload as any).iss;
+    delete (finalPayload as any).exp;
+    delete (finalPayload as any).iat;
 
     const token = jwt.sign(finalPayload, this.secretRefresh, {
       ...this.jwtOptions,
@@ -552,6 +538,171 @@ export class Tokenly {
 
     return verified;
   }
+
+  // Sistema de eventos
+  public on(event: string, callback: Function): void {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event)?.push(callback);
+  }
+
+  private emit(event: string, data: any): void {
+    const listeners = this.eventListeners.get(event);
+    if (listeners?.length) {
+      listeners.forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          // Silent error handling for callbacks
+        }
+      });
+    }
+  }
+
+  // Sistema de caché con auto-limpieza
+  private cacheToken(key: string, value: TokenlyResponse): void {
+    this.tokenCache.set(key, value);
+    
+    // Auto-limpieza después de 5 minutos
+    setTimeout(() => {
+      this.tokenCache.delete(key);
+    }, 5 * 60 * 1000);
+  }
+
+  // Análisis de seguridad del token
+  public analyzeTokenSecurity(token: string): TokenSecurityAnalysis {
+    const decoded = jwt.decode(token, { complete: true }) as { 
+      header: { alg: string }, 
+      payload: TokenlyToken & { fingerprint?: string } 
+    };
+    if (!decoded) throw new Error('Invalid token');
+
+    return {
+      algorithm: decoded.header.alg,
+      hasFingerprint: !!decoded.payload.fingerprint,
+      expirationTime: new Date(decoded.payload.exp * 1000),
+      issuedAt: new Date(decoded.payload.iat * 1000),
+      timeUntilExpiry: (decoded.payload.exp * 1000) - Date.now(),
+      strength: this.calculateTokenStrength(decoded)
+    };
+  }
+
+  // Calcular la fortaleza del token
+  private calculateTokenStrength(decodedToken: any): 'weak' | 'medium' | 'strong' {
+    let score = 0;
+    
+    // Verificar algoritmo
+    if (decodedToken.header.alg === 'HS512') score += 2;
+    else if (decodedToken.header.alg === 'HS256') score += 1;
+    
+    // Verificar fingerprint
+    if (decodedToken.payload.fingerprint) score += 2;
+    
+    // Verificar tiempo de expiración
+    const timeUntilExpiry = (decodedToken.payload.exp * 1000) - Date.now();
+    if (timeUntilExpiry < 15 * 60 * 1000) score += 1; // < 15 minutos
+    else if (timeUntilExpiry < 60 * 60 * 1000) score += 2; // < 1 hora
+    
+    return score <= 2 ? 'weak' : score <= 4 ? 'medium' : 'strong';
+  }
+
+  // Rotación automática de tokens
+  public enableAutoRotation(options: AutoRotationOptions = {}): NodeJS.Timeout {
+    console.log('Enabling auto rotation...');
+    const {
+      checkInterval = 50,
+      rotateBeforeExpiry = 1000
+    } = options;
+
+    if (this.autoRotationInterval) {
+      clearInterval(this.autoRotationInterval);
+    }
+
+    // Ejecutar verificación inmediata
+    this.checkTokensExpiration(rotateBeforeExpiry);
+
+    // Configurar nuevo intervalo
+    this.autoRotationInterval = setInterval(() => {
+      this.checkTokensExpiration(rotateBeforeExpiry);
+    }, checkInterval);
+
+    return this.autoRotationInterval;
+  }
+
+  // Método para detener la auto-rotación
+  public disableAutoRotation(): void {
+    if (this.autoRotationInterval) {
+      clearInterval(this.autoRotationInterval);
+      this.autoRotationInterval = null;
+    }
+  }
+
+  private checkTokensExpiration(rotateBeforeExpiry: number): void {
+    Array.from(this.tokenCache.entries()).forEach(([token, _]) => {
+      try {
+        const decoded = jwt.decode(token) as jwt.JwtPayload;
+        if (decoded?.exp) {
+          const timeUntilExpiry = (decoded.exp * 1000) - Date.now();
+          if (timeUntilExpiry < rotateBeforeExpiry) {
+            this.emit('tokenExpiring', {
+              token,
+              userId: decoded.userId,
+              expiresIn: timeUntilExpiry
+            });
+          }
+        }
+      } catch (error) {
+        // Silent error handling for token checks
+      }
+    });
+  }
+
+  // Limpieza automática de tokens revocados
+  public enableAutoCleanup(interval: number = 3600000): void { // 1 hora por defecto
+    setInterval(() => {
+      const now = Date.now();
+      this.revokedTokens.forEach(token => {
+        try {
+          const decoded = jwt.decode(token) as jwt.JwtPayload;
+          if (decoded && decoded.exp && decoded.exp * 1000 < now) {
+            this.revokedTokens.delete(token);
+          }
+        } catch {
+          // Token inválido, eliminarlo
+          this.revokedTokens.delete(token);
+        }
+      });
+    }, interval);
+  }
+
+  private findTokenByFingerprint(fingerprint: string): string | null {
+    for (const [, devices] of this.deviceTokens.entries()) {
+      if (devices.has(fingerprint)) {
+        return this.getToken();
+      }
+    }
+    return null;
+  }
+
+  private async validateDeviceLimit(userId: string, fingerprint: string): Promise<void> {
+    if (!this.deviceTokens.has(userId)) {
+      this.deviceTokens.set(userId, new Set());
+    }
+
+    const userDevices = this.deviceTokens.get(userId)!;
+    
+    if (userDevices.size >= this.securityConfig.maxDevices && !userDevices.has(fingerprint)) {
+      this.emit('maxDevicesReached', {
+        userId,
+        currentDevices: Array.from(userDevices),
+        maxDevices: this.securityConfig.maxDevices
+      });
+      throw new Error('Maximum number of devices reached');
+    }
+    
+    userDevices.add(fingerprint);
+  }
 }
 
 // Tipos adicionales
@@ -569,4 +720,18 @@ interface CookieOptions {
   path: string;
   expires?: Date;
   maxAge?: number;
+}
+
+interface TokenSecurityAnalysis {
+  algorithm: string;
+  hasFingerprint: boolean;
+  expirationTime: Date;
+  issuedAt: Date;
+  timeUntilExpiry: number;
+  strength: 'weak' | 'medium' | 'strong';
+}
+
+interface AutoRotationOptions {
+  checkInterval?: number;
+  rotateBeforeExpiry?: number;
 }

@@ -1,50 +1,48 @@
-import 'dotenv/config';
-import { Tokenly } from './dist/index.esm.js';
+import { Tokenly } from './src/index.js';
 
-interface TokenPayload {
-  userId: number;
-  email: string;
-  roles: string[];
+async function ejecutarPruebas() {
+  try {
+    // Inicializar Tokenly con configuración básica
+    const tokenly = new Tokenly({
+      accessTokenExpiry: '1h',
+      refreshTokenExpiry: '7d',
+      securityConfig: {
+        enableFingerprint: true,
+        enableBlacklist: true,
+        maxDevices: 5
+      }
+    });
+
+    // Prueba 1: Generación de token
+    console.log('Prueba 1: Generación de token');
+    const payload = { 
+      userId: '123',
+      role: 'user'
+    };
+
+    const token = tokenly.generateAccessToken(payload);
+    console.log('Token generado:', token);
+
+    // Prueba 2: Verificación de token
+    console.log('\nPrueba 2: Verificación de token');
+    const verificado = tokenly.verifyAccessToken(token.raw);
+    console.log('Token verificado:', verificado);
+
+    console.log('\nPruebas completadas exitosamente');
+
+  } catch (error) {
+    console.error('Error en las pruebas:', error);
+    throw error;
+  }
 }
 
-// Usage example
-const tokenly = new Tokenly({
-  accessTokenExpiry: '15m',
-  refreshTokenExpiry: '7d',
-  cookieOptions: {
-    secure: true,
-    httpOnly: true,
-    sameSite: 'strict' as const,
-    domain: '.yourdomain.com',
-    path: '/api',
-  },
-  jwtOptions: {
-    algorithm: 'HS512',
-    issuer: 'tokenly',
-    audience: 'api',
-  },
-});
-
-// Test payload with type
-const payload: TokenPayload = {
-  userId: 1,
-  email: 'test@example.com',
-  roles: ['user'],
-};
-
-// Generate initial tokens
-const accessToken = tokenly.generateAccessToken(payload);
-const refreshToken = tokenly.generateRefreshToken(payload);
-
-console.log('Access Token:', accessToken);
-console.log('Refresh Token (with cookie config):', refreshToken);
-
-// Example of token rotation
-const { accessToken: newAccess, refreshToken: newRefresh } = tokenly.rotateTokens(refreshToken.raw);
-
-console.log('New Access Token:', newAccess);
-console.log('New Refresh Token:', newRefresh);
-
-// Verify token
-const verifiedPayload = tokenly.verifyAccessToken(accessToken.raw);
-console.log('Verified Payload:', verifiedPayload); 
+// Ejecutar pruebas con mejor manejo de errores
+ejecutarPruebas()
+  .then(() => {
+    console.log('Proceso de pruebas finalizado correctamente');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Error fatal en las pruebas:', error);
+    process.exit(1);
+  }); 

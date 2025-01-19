@@ -323,13 +323,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE.md) file for details.
 
 ## 💬 Support
 
-- 📧 Email: support@tokenly.dev
 - 💻 GitHub Issues: [Create an issue](https://github.com/Nekzus/tokenly/issues)
-- 📚 Documentation: [Full documentation](https://tokenly.dev/docs)
 
 ## 👨‍💻 Author
 

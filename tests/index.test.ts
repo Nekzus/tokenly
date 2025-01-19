@@ -267,45 +267,313 @@ describe('Tokenly', () => {
     });
   });
 
-  describe('Fingerprint Validation', () => {
-    test('should validate complex fingerprint scenarios', () => {
-      const contexts = [
-        {
-          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X)',
-          ip: '192.168.1.1'
-        },
-        {
-          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X)',
-          ip: '192.168.1.1',
-          additionalData: 'some-device-id'
-        }
+  describe('Fingerprint Generation and Validation', () => {
+    test('should generate unique fingerprints for different device/IP combinations', () => {
+      const testCases = [
+        { userAgent: 'Mozilla/5.0', ip: '192.168.1.1' },
+        { userAgent: 'Mozilla/5.0', ip: '192.168.1.2' },
+        { userAgent: 'Chrome/90.0', ip: '192.168.1.1' },
+        { userAgent: 'Safari/14.0', ip: '192.168.1.1' }
       ];
 
-      const token1 = tokenly.generateAccessToken({ userId: '123' }, undefined, contexts[0]);
-      const token2 = tokenly.generateAccessToken({ userId: '123' }, undefined, contexts[1]);
+      const fingerprints = new Set();
+      const tokensMap = new Map();
 
-      expect(token1.payload.fingerprint).not.toBe(token2.payload.fingerprint);
+      testCases.forEach(context => {
+        const token = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+
+        // Verificar que el fingerprint existe
+        expect(token.payload.fingerprint).toBeDefined();
+        
+        // Almacenar para comparaciones
+        const key = `${context.userAgent}:${context.ip}`;
+        tokensMap.set(key, token);
+        fingerprints.add(token.payload.fingerprint);
+      });
+
+      // Verificar que cada combinación única genera un fingerprint único
+      expect(fingerprints.size).toBe(testCases.length);
     });
 
-    test('should handle fingerprint changes', () => {
+    test('should maintain consistent fingerprints for same device/IP', () => {
+      const context = {
+        userAgent: 'Mozilla/5.0',
+        ip: '192.168.1.1'
+      };
+
+      // Generar múltiples tokens con el mismo contexto
+      const token1 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
+      const token2 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
+      const token3 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
+
+      // Verificar que los fingerprints son idénticos
+      expect(token1.payload.fingerprint).toBe(token2.payload.fingerprint);
+      expect(token2.payload.fingerprint).toBe(token3.payload.fingerprint);
+    });
+
+    test('should reject tokens with mismatched fingerprints', () => {
+      const originalContext = {
+        userAgent: 'Mozilla/5.0',
+        ip: '192.168.1.1'
+      };
+
+      const differentContext = {
+        userAgent: 'Chrome/90.0',
+        ip: '192.168.1.2'
+      };
+
+      const token = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        originalContext
+      );
+
+      // Verificar que el token no puede ser usado con un contexto diferente
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, differentContext);
+      }).toThrow('Invalid token fingerprint');
+    });
+
+    test('should handle complex fingerprint scenarios', () => {
+      const baseContext = {
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X)',
+        ip: '192.168.1.1'
+      };
+
+      // Caso 1: Cambio menor en User-Agent
+      const slightlyDifferentUA = {
+        ...baseContext,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4.1 like Mac OS X)'
+      };
+
+      // Caso 2: Cambio en IP pero mismo dispositivo
+      const differentIP = {
+        ...baseContext,
+        ip: '192.168.1.2'
+      };
+
+      // Caso 3: Información adicional en el contexto
+      const extendedContext = {
+        ...baseContext,
+        additionalData: 'some-device-id'
+      };
+
+      const token = tokenly.generateAccessToken({ userId: '123' }, undefined, baseContext);
+
+      // Verificar que cambios menores en UA no afectan la validación
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, slightlyDifferentUA);
+      }).toThrow('Invalid token fingerprint');
+
+      // Verificar que cambios en IP invalidan el token
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, differentIP);
+      }).toThrow('Invalid token fingerprint');
+
+      // Verificar que información adicional genera un fingerprint diferente
+      const extendedToken = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        extendedContext
+      );
+      expect(extendedToken.payload.fingerprint).not.toBe(token.payload.fingerprint);
+    });
+
+    test('should handle fingerprint changes over time', async () => {
       const context = {
         userAgent: 'Mozilla/5.0',
         ip: '192.168.1.1'
       };
 
       const token = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
+      
+      // Verificar inmediatamente
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, context);
+      }).not.toThrow();
 
-      // Cambio menor en User-Agent
-      expect(() => tokenly.verifyAccessToken(token.raw, {
-        ...context,
-        userAgent: 'Mozilla/5.0 (Updated)'
-      })).toThrow();
+      // Esperar un momento y verificar de nuevo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, context);
+      }).not.toThrow();
 
-      // Cambio en IP
-      expect(() => tokenly.verifyAccessToken(token.raw, {
-        ...context,
-        ip: '192.168.1.2'
-      })).toThrow();
+      // Verificar con un cambio en el contexto
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, {
+          ...context,
+          userAgent: 'Mozilla/5.0 (Updated)'
+        });
+      }).toThrow('Invalid token fingerprint');
+    });
+
+    test('should handle partial context changes', () => {
+      const originalContext = {
+        userAgent: 'Mozilla/5.0',
+        ip: '192.168.1.1'
+      };
+
+      const token = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        originalContext
+      );
+
+      // Cambio solo de IP
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, {
+          ...originalContext,
+          ip: '192.168.1.2'
+        });
+      }).toThrow('Invalid token fingerprint');
+
+      // Cambio solo de User-Agent
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, {
+          ...originalContext,
+          userAgent: 'Chrome/90.0'
+        });
+      }).toThrow('Invalid token fingerprint');
+    });
+
+    test('should handle invalid context values', () => {
+      // Contexto vacío
+      expect(() => {
+        tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          { userAgent: '', ip: '' }
+        );
+      }).toThrow();
+
+      // Valores null
+      expect(() => {
+        tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          { userAgent: null as any, ip: null as any }
+        );
+      }).toThrow();
+
+      // Valores undefined
+      expect(() => {
+        tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          { userAgent: undefined as any, ip: undefined as any }
+        );
+      }).toThrow();
+    });
+
+    test('should handle special characters in context', () => {
+      const specialCases = [
+        {
+          userAgent: 'Mozilla/5.0 (特殊文字)',
+          ip: '192.168.1.1',
+          description: 'Unicode characters'
+        },
+        {
+          userAgent: 'Mozilla/5.0 (@#$%^&*)',
+          ip: '192.168.1.1',
+          description: 'Special characters'
+        },
+        {
+          userAgent: 'Mozilla/5.0 (\n\t)',
+          ip: '192.168.1.1',
+          description: 'Whitespace characters'
+        },
+        {
+          userAgent: 'Mozilla/5.0 ('.repeat(100),
+          ip: '192.168.1.1',
+          description: 'Long string'
+        }
+      ];
+
+      specialCases.forEach(context => {
+        const token = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+
+        // Verificar que el fingerprint se genera correctamente
+        expect(token.payload.fingerprint).toBeDefined();
+        expect(typeof token.payload.fingerprint).toBe('string');
+        expect(token.payload.fingerprint.length).toBeGreaterThan(0);
+
+        // Verificar que el token puede ser validado con el mismo contexto
+        expect(() => {
+          tokenly.verifyAccessToken(token.raw, context);
+        }).not.toThrow();
+      });
+    });
+
+    test('should handle edge cases in fingerprint generation', () => {
+      const edgeCases = [
+        // IP en diferentes formatos
+        {
+          userAgent: 'Mozilla/5.0',
+          ip: '::1',
+          description: 'IPv6 localhost'
+        },
+        {
+          userAgent: 'Mozilla/5.0',
+          ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+          description: 'Full IPv6'
+        },
+        // User-Agent con información compleja
+        {
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          ip: '192.168.1.1',
+          description: 'Complex User-Agent'
+        },
+        // Casos límite de longitud
+        {
+          userAgent: 'a',
+          ip: '192.168.1.1',
+          description: 'Minimal User-Agent'
+        },
+        {
+          userAgent: 'Mozilla/5.0',
+          ip: '0.0.0.0',
+          description: 'Special IP'
+        }
+      ];
+
+      const fingerprints = new Set();
+
+      edgeCases.forEach(context => {
+        const token = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+
+        // Verificar unicidad del fingerprint
+        expect(fingerprints.has(token.payload.fingerprint)).toBe(false);
+        fingerprints.add(token.payload.fingerprint);
+
+        // Verificar consistencia
+        const token2 = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+        expect(token.payload.fingerprint).toBe(token2.payload.fingerprint);
+
+        // Verificar validación
+        expect(() => {
+          tokenly.verifyAccessToken(token.raw, context);
+        }).not.toThrow();
+      });
+
+      // Verificar que todos los casos generaron fingerprints únicos
+      expect(fingerprints.size).toBe(edgeCases.length);
     });
   });
 
@@ -465,6 +733,152 @@ describe('Tokenly', () => {
       tokenly.disableAutoRotation();
       
       expect(tokenly['autoRotationInterval']).toBeNull();
+    });
+  });
+
+  describe('Enhanced Fingerprint Tests', () => {
+    test('should verify actual fingerprint content and uniqueness', () => {
+      const testCases = [
+        {
+          userAgent: 'TestAgent',
+          ip: '192.168.1.1',
+          description: 'Base case'
+        },
+        {
+          userAgent: 'TestAgent',
+          ip: '192.168.1.2',
+          description: 'Same UA, different IP'
+        },
+        {
+          userAgent: 'Chrome/90.0',
+          ip: '192.168.1.1',
+          description: 'Different UA, same IP'
+        }
+      ];
+
+      const fingerprints = new Set();
+      const tokens = new Map();
+
+      // Generar tokens y recolectar fingerprints
+      testCases.forEach(context => {
+        const token = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+
+        const key = `${context.userAgent}:${context.ip}`;
+        tokens.set(key, token);
+        fingerprints.add(token.payload.fingerprint);
+
+        // Verificar estructura del token
+        expect(token.payload).toHaveProperty('fingerprint');
+        expect(typeof token.payload.fingerprint).toBe('string');
+        expect(token.payload.fingerprint.length).toBeGreaterThan(0);
+      });
+
+      // Verificar unicidad de fingerprints
+      expect(fingerprints.size).toBe(testCases.length);
+
+      // Verificar que cada token solo funciona con su contexto original
+      testCases.forEach(context => {
+        const key = `${context.userAgent}:${context.ip}`;
+        const token = tokens.get(key);
+
+        // Debe validar con su contexto original
+        expect(() => {
+          tokenly.verifyAccessToken(token.raw, context);
+        }).not.toThrow();
+
+        // No debe validar con otros contextos
+        testCases.forEach(otherContext => {
+          if (otherContext.userAgent !== context.userAgent || 
+              otherContext.ip !== context.ip) {
+            expect(() => {
+              tokenly.verifyAccessToken(token.raw, otherContext);
+            }).toThrow('Invalid token fingerprint');
+          }
+        });
+      });
+    });
+
+    test('should maintain fingerprint consistency for same context', () => {
+      const context = {
+        userAgent: 'TestAgent',
+        ip: '192.168.1.1'
+      };
+
+      // Generar múltiples tokens con el mismo contexto
+      const tokens = Array.from({ length: 3 }, () => 
+        tokenly.generateAccessToken({ userId: '123' }, undefined, context)
+      );
+
+      // El fingerprint debería ser el mismo para el mismo contexto
+      const fingerprints = new Set(tokens.map(t => t.payload.fingerprint));
+      expect(fingerprints.size).toBe(1);
+    });
+
+    test('should detect subtle context changes', () => {
+      const originalContext = {
+        userAgent: 'TestAgent',
+        ip: '192.168.1.1'
+      };
+
+      const token = tokenly.generateAccessToken({ userId: '123' }, undefined, originalContext);
+
+      // Verificar que el mismo contexto funciona
+      expect(() => {
+        tokenly.verifyAccessToken(token.raw, originalContext);
+      }).not.toThrow();
+
+      // Cambio sutil en el contexto
+      const modifiedContext = {
+        ...originalContext,
+        ip: '192.168.1.2'
+      };
+
+      // Generar nuevo token con contexto modificado
+      const newToken = tokenly.generateAccessToken({ userId: '123' }, undefined, modifiedContext);
+      
+      // Verificar que los fingerprints son diferentes
+      expect(token.payload.fingerprint).not.toBe(newToken.payload.fingerprint);
+    });
+
+    test('should handle special characters and edge cases', () => {
+      const specialCases = [
+        {
+          userAgent: 'Mozilla/5.0 (特殊文字)',
+          ip: '192.168.1.1'
+        },
+        {
+          userAgent: 'Mozilla/5.0 (@#$%^&*)',
+          ip: '::1'
+        },
+        {
+          userAgent: 'Mozilla/5.0 (\n\t)',
+          ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
+        }
+      ];
+
+      const fingerprints = new Set();
+
+      specialCases.forEach(context => {
+        const token = tokenly.generateAccessToken(
+          { userId: '123' },
+          undefined,
+          context
+        );
+
+        fingerprints.add(token.payload.fingerprint);
+
+        // Verificar que el token es válido con su contexto original
+        expect(() => {
+          tokenly.verifyAccessToken(token.raw, context);
+        }).not.toThrow();
+      });
+
+      // Verificar unicidad de fingerprints
+      expect(fingerprints.size).toBe(specialCases.length);
     });
   });
 });

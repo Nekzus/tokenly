@@ -24,7 +24,6 @@ export default {
     'util',
     'events',
     'jsonwebtoken',
-    'uuid',
     'node:crypto',
     'node:events'
   ],

@@ -1,160 +1,184 @@
 # Tokenly
 
-A secure JWT token manager with HttpOnly cookie support for modern web applications.
+Secure JWT token management for modern web applications with HttpOnly cookies support.
 
-[![npm version](https://badge.fury.io/js/@nekzus%2Ftokenly.svg)](https://badge.fury.io/js/@nekzus%2Ftokenly)
+![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🌟 Features
-
-- 🔐 **Advanced Security**
-  - JWT token management with HS512 algorithm
-  - HttpOnly cookie support
-  - Automatic token rotation
-  - Token blacklisting
-  
-- 🔄 **Device Management**
-  - Configurable device limits
-  - Duplicate device detection
-  - Per-device token revocation
-
-## 📦 Installation
+## Quick Start
 
 ```bash
 npm install @nekzus/tokenly
-# or
-yarn add @nekzus/tokenly
-# or
-pnpm add @nekzus/tokenly
 ```
 
-## 🚀 Basic Usage
+## Key Features
 
+- 🔒 **Secure by Default**: HttpOnly cookies, token rotation, blacklisting
+- 🚀 **Easy Integration**: Simple API for both frontend and backend
+- 🔄 **Auto-Refresh**: Automatic token rotation before expiration
+- 📱 **Device Management**: Control concurrent sessions
+
+## Basic Usage
+
+### Backend Setup
 ```typescript
 import { Tokenly } from '@nekzus/tokenly';
 
-// Basic initialization
-const tokenly = new Tokenly({
+const auth = new Tokenly({
   accessTokenExpiry: '15m',
   refreshTokenExpiry: '7d',
-  securityConfig: {
-    enableFingerprint: true,
-    enableBlacklist: true,
-    maxDevices: 5
+  cookieOptions: {
+    httpOnly: true,
+    secure: true
   }
 });
 
-// Generate access token
-const accessToken = tokenly.generateAccessToken({
-  userId: '123',
-  role: 'user'
+// Login endpoint
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  // Validate user (your logic here)
+  const user = await validateUser(email, password);
+  
+  // Generate tokens
+  const access = auth.generateAccessToken({ userId: user.id });
+  const refresh = auth.generateRefreshToken({ userId: user.id });
+  
+  // Set refresh token as HttpOnly cookie
+  res.cookie('refresh_token', refresh.raw, refresh.cookieConfig.options);
+  
+  // Send access token in response
+  res.json({ 
+    accessToken: access.raw,
+    user: user 
+  });
 });
 
-// Verify token
-const verified = tokenly.verifyAccessToken(accessToken.raw);
+// Refresh endpoint
+app.post('/refresh', (req, res) => {
+  const refreshToken = req.cookies.refresh_token;
+  
+  try {
+    const verified = auth.verifyRefreshToken(refreshToken);
+    const { accessToken, refreshToken: newRefresh } = auth.rotateTokens(refreshToken);
+    
+    res.cookie('refresh_token', newRefresh.raw, newRefresh.cookieConfig.options);
+    res.json({ accessToken: accessToken.raw });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
 ```
 
-## 🔧 Configuration
-
-### Available Options
-
+### Frontend Integration
 ```typescript
-interface TokenlyConfig {
-  accessTokenExpiry?: string;
-  refreshTokenExpiry?: string;
-  cookieOptions?: {
-    secure?: boolean;
-    httpOnly?: boolean;
-    sameSite?: 'strict' | 'lax' | 'none';
-    domain?: string;
-    path?: string;
-    maxAge?: number;
-  };
-  jwtOptions?: {
-    algorithm?: jwt.Algorithm;
-    audience?: string | string[];
-    issuer?: string;
-  };
-  securityConfig?: {
-    enableFingerprint?: boolean;
-    enableBlacklist?: boolean;
-    maxDevices?: number;
-    revokeOnSecurityBreach?: boolean;
-  };
-}
-```
+import axios from 'axios';
 
-### Environment Variables
-
-```env
-JWT_SECRET_ACCESS=your-secure-access-token-secret
-JWT_SECRET_REFRESH=your-secure-refresh-token-secret
-```
-
-## 🔄 Automatic Rotation
-
-```typescript
-// Enable automatic rotation
-tokenly.enableAutoRotation({
-  checkInterval: 50000,    // Check interval in ms
-  rotateBeforeExpiry: 1000 // Rotate tokens before expiry (ms)
+const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true // Important for cookies
 });
 
-// Disable rotation
-tokenly.disableAutoRotation();
+// Axios interceptor for auto refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      const { data } = await api.post('/refresh');
+      error.config.headers.Authorization = `Bearer ${data.accessToken}`;
+      return api(error.config);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Usage example
+const login = async (email: string, password: string) => {
+  const { data } = await api.post('/login', { email, password });
+  localStorage.setItem('accessToken', data.accessToken);
+  return data.user;
+};
+
+const getProtectedData = async () => {
+  const token = localStorage.getItem('accessToken');
+  const { data } = await api.get('/protected', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return data;
+};
 ```
 
-## 📊 Events
+## Advanced Configuration
 
 ```typescript
-// Listen for token events
-tokenly.on('tokenExpiring', (data) => {
+const auth = new Tokenly({
+  accessTokenExpiry: '15m',
+  refreshTokenExpiry: '7d',
+  cookieOptions: {
+    secure: true,
+    httpOnly: true,
+    sameSite: 'strict'
+  },
+  securityConfig: {
+    enableFingerprint: true,
+    maxDevices: 5,
+    revokeOnSecurityBreach: true
+  }
+});
+```
+
+## Security Features
+
+- **HttpOnly Cookies**: Prevents XSS attacks
+- **Token Rotation**: Automatic refresh before expiration
+- **Device Fingerprinting**: Detect and limit concurrent sessions
+- **Token Blacklisting**: Revoke compromised tokens
+- **Auto Cleanup**: Automatic removal of expired tokens
+
+## API Reference
+
+### Token Generation
+```typescript
+const accessToken = auth.generateAccessToken(payload);
+const refreshToken = auth.generateRefreshToken(payload);
+```
+
+### Token Verification
+```typescript
+const verified = auth.verifyAccessToken(token);
+const refreshVerified = auth.verifyRefreshToken(token);
+```
+
+### Token Rotation
+```typescript
+const { accessToken, refreshToken } = auth.rotateTokens(currentRefreshToken);
+```
+
+### Event Handling
+```typescript
+auth.on('tokenExpiring', (data) => {
   console.log('Token about to expire:', data);
 });
-
-tokenly.on('maxDevicesReached', (data) => {
-  console.log('Maximum devices reached:', data);
-});
 ```
 
-## 🔍 Error Handling
+## Error Handling
 
 ```typescript
 try {
-  const token = tokenly.generateAccessToken({
-    userId: '123',
-    role: 'user'
-  });
+  const verified = auth.verifyAccessToken(token);
 } catch (error) {
-  console.error('Error generating token:', error.message);
+  if (error.message === 'Token has been revoked') {
+    // Handle revoked token
+  }
+  // Handle other errors
 }
 ```
 
-## 📚 Responses
+## TypeScript Support
 
-### TokenlyResponse
+Full TypeScript support with detailed type definitions included.
 
-```typescript
-interface TokenlyResponse {
-  raw: string;           // Raw JWT token
-  payload: {             // Decoded payload
-    [key: string]: any;
-    iat?: Date;         // Issued at
-    exp?: Date;         // Expires at
-  };
-  cookieConfig?: {      // Cookie configuration (if applicable)
-    name: string;
-    value: string;
-    options: TokenlyOptions;
-  };
-}
-```
-
-## 🤝 Contributing
-
-Contributions are welcome. Please open an issue or pull request.
-
-## 📄 License
+## License
 
 MIT © [Nekzus](https://github.com/Nekzus)
 

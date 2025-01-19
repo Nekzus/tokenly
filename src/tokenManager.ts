@@ -181,9 +181,21 @@ export class Tokenly {
     if (!context.userAgent || !context.ip) {
       throw new Error('Invalid context for fingerprint generation');
     }
+
+    // Normalizar valores
+    const normalizedUA = context.userAgent.trim();
+    const normalizedIP = context.ip.trim();
+
+    // Usar un separador único para evitar colisiones
+    const fingerprintData = JSON.stringify({
+      ua: normalizedUA,
+      ip: normalizedIP,
+      additional: context.additionalData || ''
+    });
+
     return crypto
       .createHash('sha256')
-      .update(`${context.userAgent}${context.ip}${context.additionalData || ''}`)
+      .update(fingerprintData)
       .digest('hex');
   }
 

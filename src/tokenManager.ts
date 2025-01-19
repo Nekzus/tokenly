@@ -74,6 +74,7 @@ export class Tokenly {
   private securityConfig: Required<NonNullable<TokenlyConfig['securityConfig']>>;
   private deviceTokens: Map<string, Set<string>> = new Map();
   private rotationCounts: Map<string, number> = new Map();
+  private revokedTokens: Set<string> = new Set();
 
   /**
    * Initialize Tokenly with custom configuration
@@ -181,9 +182,12 @@ export class Tokenly {
    * Revoca un token específico
    */
   revokeToken(token: string): void {
-    if (this.securityConfig.enableBlacklist) {
-      this.blacklistedTokens.add(token);
+    console.log('DEBUG [3]: Revocando token');
+    if (!token || typeof token !== 'string') {
+      throw new Error('Invalid token format');
     }
+    this.revokedTokens.add(token);
+    console.log('DEBUG [4]: Token revocado exitosamente');
   }
 
   /**
@@ -233,15 +237,38 @@ export class Tokenly {
     options?: jwt.SignOptions,
     context?: { userAgent: string; ip: string; additionalData?: string }
   ): TokenlyResponse {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('Payload must be an object');
+    }
+
+    if (Object.keys(payload).length === 0) {
+      throw new Error('Payload cannot be empty');
+    }
+
+    const userId = (payload as any).userId;
+
+    if (userId === null || userId === undefined) {
+      throw new Error('userId cannot be null or undefined');
+    }
+
+    if (typeof userId !== 'string') {
+      throw new Error('userId must be a string');
+    }
+
+    if (userId.length > 1000) {
+      throw new Error('userId exceeds maximum length');
+    }
+
+    if (userId.trim().length === 0) {
+      throw new Error('userId cannot be empty');
+    }
+
     try {
-      this.validatePayload(payload);
       const finalPayload = { ...payload };
 
       if (this.securityConfig.enableFingerprint && context) {
         finalPayload['fingerprint'] = this.generateFingerprint(context);
         
-        // Gestionar límite de dispositivos
-        const userId = (payload as any).userId;
         if (!this.deviceTokens.has(userId)) {
           this.deviceTokens.set(userId, new Set());
         }
@@ -261,10 +288,7 @@ export class Tokenly {
 
       return this.decodeWithReadableDates(token);
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Token generation failed');
+      throw error;
     }
   }
 
@@ -281,20 +305,20 @@ export class Tokenly {
       throw new Error('Invalid token format');
     }
 
+    if (this.revokedTokens.has(token)) {
+      throw new Error('Token has been revoked');
+    }
+
     try {
       const decoded = jwt.verify(token, this.secretAccess, {
         ...this.verifyOptions,
-        clockTolerance: 0 // Desactivar tolerancia para los tests de expiración
+        ignoreExpiration: false,
+        clockTolerance: 0
       }) as TokenlyToken;
 
-      if (
-        this.securityConfig.enableFingerprint &&
-        context &&
-        decoded.fingerprint
-      ) {
-        const newFingerprint = this.generateFingerprint(context);
-        if (decoded.fingerprint !== newFingerprint) {
-          this.revokeToken(token);
+      if (this.securityConfig.enableFingerprint && context) {
+        const expectedFingerprint = this.generateFingerprint(context);
+        if (decoded.fingerprint !== expectedFingerprint) {
           throw new Error('Invalid token fingerprint');
         }
       }
@@ -304,7 +328,16 @@ export class Tokenly {
       if (error instanceof jwt.TokenExpiredError) {
         throw new Error('jwt expired');
       }
-      throw error instanceof Error ? error : new Error('Token verification failed');
+      
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw error;
+      }
+      
+      if (error instanceof Error) {
+        throw error;
+      }
+      
+      throw new Error('Token verification failed');
     }
   }
 
@@ -410,4 +443,130 @@ export class Tokenly {
   clearToken(): void {
     this.currentToken = null;
   }
+
+  /**
+   * Helper para verificar si un token está próximo a expirar
+   * @param token Token a verificar
+   * @param thresholdMinutes Minutos antes de la expiración para considerar como "próximo a expirar"
+   */
+  public isTokenExpiringSoon(token: string, thresholdMinutes: number = 5): boolean {
+    try {
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
+      if (!decoded || !decoded.exp) return false;
+
+      const expirationTime = decoded.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+      
+      return timeUntilExpiry < (thresholdMinutes * 60 * 1000);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Helper para obtener información del token de forma segura
+   * @param token Token a decodificar
+   */
+  public getTokenInfo(token: string): TokenInfo | null {
+    try {
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
+      if (!decoded) return null;
+
+      return {
+        userId: decoded.userId as string,
+        expiresAt: new Date(decoded.exp! * 1000),
+        issuedAt: new Date(decoded.iat! * 1000),
+        fingerprint: decoded.fingerprint as string | undefined
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Validar un token sin verificar la firma (útil para pre-validaciones)
+   * @param token Token a validar
+   */
+  public validateTokenFormat(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+
+      return parts.every(part => {
+        try {
+          Buffer.from(part, 'base64').toString();
+          return true;
+        } catch {
+          return false;
+        }
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Generar un token temporal de un solo uso
+   * @param purpose Propósito del token
+   * @param expiresIn Tiempo de expiración
+   */
+  public generateOneTimeToken(purpose: string, expiresIn: string = '5m'): string {
+    const payload = {
+      purpose,
+      nonce: crypto.randomBytes(16).toString('hex'),
+      iat: Math.floor(Date.now() / 1000)
+    };
+
+    return jwt.sign(payload, this.secretAccess, { expiresIn });
+  }
+
+  /**
+   * Mejorar la seguridad de las cookies con flags adicionales
+   */
+  private getEnhancedCookieOptions(): CookieOptions {
+    return {
+      ...this.cookieOptions,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
+      path: '/',
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    };
+  }
+
+  /**
+   * Validar un refresh token con verificaciones adicionales de seguridad
+   */
+  public verifyRefreshTokenEnhanced(token: string): TokenlyResponse {
+    if (!this.validateTokenFormat(token)) {
+      throw new Error('Invalid token format');
+    }
+
+    const verified = this.verifyRefreshToken(token);
+    
+    if (this.isTokenExpiringSoon(token, 60)) {
+      throw new Error('Refresh token is about to expire');
+    }
+
+    return verified;
+  }
+}
+
+// Tipos adicionales
+interface TokenInfo {
+  userId: string;
+  expiresAt: Date;
+  issuedAt: Date;
+  fingerprint?: string;
+}
+
+interface CookieOptions {
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'strict' | 'lax' | 'none';
+  path: string;
+  expires?: Date;
+  maxAge?: number;
 }

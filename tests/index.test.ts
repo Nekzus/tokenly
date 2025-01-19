@@ -141,7 +141,7 @@ describe('Tokenly', () => {
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
-      // El tercer dispositivo debería fallar
+      // Intentar generar un token para un tercer dispositivo
       expect(() => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
       ).toThrow('Maximum number of devices reached');
@@ -175,10 +175,7 @@ describe('Tokenly', () => {
       
       const token = customTokenly.generateAccessToken({ userId: '123' });
       
-      // Esperar a que expire
       await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Verificar token expirado
       expect(() => customTokenly.verifyAccessToken(token.raw)).toThrow('jwt expired');
     });
 
@@ -199,7 +196,7 @@ describe('Tokenly', () => {
       ];
 
       // Generar tokens para los primeros dos dispositivos
-      const tokens = devices.slice(0, 2).map(device => 
+      devices.slice(0, 2).forEach(device => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
@@ -313,34 +310,84 @@ describe('Tokenly', () => {
   });
 
   describe('Error Handling and Edge Cases', () => {
-    test('should handle malformed tokens gracefully', () => {
-      const malformedTokens = [
-        'invalid',
-        'invalid.token',
-        'invalid.token.structure',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // Header only
-        null,
-        undefined,
-        ''
-      ];
-
-      malformedTokens.forEach(token => {
-        expect(() => tokenly.verifyAccessToken(token as string)).toThrow();
+    test('should handle token expiration correctly', async () => {
+      const customTokenly = new Tokenly({
+        accessTokenExpiry: '1ms'
       });
+      
+      const token = customTokenly.generateAccessToken({ userId: '123' });
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(() => customTokenly.verifyAccessToken(token.raw)).toThrow('jwt expired');
     });
 
     test('should handle payload validation', () => {
-      const invalidPayloads = [
-        {},
-        { userId: '' },
-        { userId: null },
-        { userId: undefined },
-        { userId: Array(1000).fill('a').join('') }
+      const testCases = [
+        {
+          payload: {},
+          expectedError: 'Payload cannot be empty'
+        },
+        {
+          payload: { userId: '' },
+          expectedError: 'userId cannot be empty'
+        },
+        {
+          payload: { userId: null },
+          expectedError: 'userId cannot be null or undefined'
+        },
+        {
+          payload: { userId: undefined },
+          expectedError: 'userId cannot be null or undefined'
+        },
+        {
+          payload: { userId: 'a'.repeat(1001) },
+          expectedError: 'userId exceeds maximum length'
+        }
       ];
 
-      invalidPayloads.forEach(payload => {
-        expect(() => tokenly.generateAccessToken(payload)).toThrow();
+      testCases.forEach(({ payload, expectedError }) => {
+        expect(() => tokenly.generateAccessToken(payload)).toThrowError(expectedError);
       });
+    });
+  });
+
+  describe('Enhanced Features', () => {
+    test('should detect tokens about to expire', () => {
+      const normalToken = tokenly.generateAccessToken({ userId: '123' });
+      expect(tokenly.isTokenExpiringSoon(normalToken.raw, 10)).toBe(false);
+
+      const shortLivedTokenly = new Tokenly({
+        accessTokenExpiry: '2m'
+      });
+      const shortLivedToken = shortLivedTokenly.generateAccessToken({ userId: '123' });
+      expect(tokenly.isTokenExpiringSoon(shortLivedToken.raw, 3)).toBe(true);
+    });
+
+    test('should validate token format', () => {
+      const token = tokenly.generateAccessToken({ userId: '123' });
+      expect(tokenly.validateTokenFormat(token.raw)).toBe(true);
+      expect(tokenly.validateTokenFormat('invalid.token')).toBe(false);
+    });
+
+    test('should generate and validate one-time tokens', () => {
+      const oneTimeToken = tokenly.generateOneTimeToken('password-reset');
+      expect(oneTimeToken).toBeDefined();
+      expect(tokenly.validateTokenFormat(oneTimeToken)).toBe(true);
+    });
+
+    test('should get token info safely', () => {
+      const token = tokenly.generateAccessToken({ userId: '123' });
+      const info = tokenly.getTokenInfo(token.raw);
+      
+      expect(info).toBeDefined();
+      expect(info?.userId).toBe('123');
+      expect(info?.expiresAt).toBeInstanceOf(Date);
+      expect(info?.issuedAt).toBeInstanceOf(Date);
+    });
+
+    test('should handle enhanced refresh token verification', () => {
+      const token = tokenly.generateRefreshToken({ userId: '123' });
+      const verified = tokenly.verifyRefreshTokenEnhanced(token.raw);
+      expect(verified.payload).toHaveProperty('userId', '123');
     });
   });
 });

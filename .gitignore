@@ -8,7 +8,6 @@ coverage/
 .nyc_output/
 
 # Build
-dist/
 build/
 lib/
 

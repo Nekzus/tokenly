@@ -1,184 +1,169 @@
-# Tokenly
+# Tokenly 🔐
 
-Secure JWT token management for modern web applications with HttpOnly cookies support.
+<div align="center">
 
-![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
+[![npm version](https://badge.fury.io/js/@nekzus%2Ftokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Quick Start
+**Secure JWT token management with advanced device fingerprinting**
+
+_Security by default, enhanced with device fingerprinting_
+
+</div>
+
+## ✨ Features
+
+- **🛡️ Security by Default**: JWT tokens with built-in security features
+- **🔒 Device Control**: Advanced fingerprinting system for device tracking
+- **🚀 Easy Integration**: Simple API that works seamlessly with Express
+- **⚡ Performance**: Optimized token generation and validation
+- **🛠️ Configurable**: Flexible settings to match your security needs
+
+## 📦 Installation
 
 ```bash
 npm install @nekzus/tokenly
 ```
 
-## Key Features
+## 🚀 Quick Start
 
-- 🔒 **Secure by Default**: HttpOnly cookies, token rotation, blacklisting
-- 🚀 **Easy Integration**: Simple API for both frontend and backend
-- 🔄 **Auto-Refresh**: Automatic token rotation before expiration
-- 📱 **Device Management**: Control concurrent sessions
-
-## Basic Usage
-
-### Backend Setup
 ```typescript
 import { Tokenly } from '@nekzus/tokenly';
 
+// Initialize with fingerprinting enabled
 const auth = new Tokenly({
   accessTokenExpiry: '15m',
-  refreshTokenExpiry: '7d',
-  cookieOptions: {
-    httpOnly: true,
-    secure: true
-  }
-});
-
-// Login endpoint
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  
-  // Validate user (your logic here)
-  const user = await validateUser(email, password);
-  
-  // Generate tokens
-  const access = auth.generateAccessToken({ userId: user.id });
-  const refresh = auth.generateRefreshToken({ userId: user.id });
-  
-  // Set refresh token as HttpOnly cookie
-  res.cookie('refresh_token', refresh.raw, refresh.cookieConfig.options);
-  
-  // Send access token in response
-  res.json({ 
-    accessToken: access.raw,
-    user: user 
-  });
-});
-
-// Refresh endpoint
-app.post('/refresh', (req, res) => {
-  const refreshToken = req.cookies.refresh_token;
-  
-  try {
-    const verified = auth.verifyRefreshToken(refreshToken);
-    const { accessToken, refreshToken: newRefresh } = auth.rotateTokens(refreshToken);
-    
-    res.cookie('refresh_token', newRefresh.raw, newRefresh.cookieConfig.options);
-    res.json({ accessToken: accessToken.raw });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid refresh token' });
-  }
-});
-```
-
-### Frontend Integration
-```typescript
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: '/api',
-  withCredentials: true // Important for cookies
-});
-
-// Axios interceptor for auto refresh
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      const { data } = await api.post('/refresh');
-      error.config.headers.Authorization = `Bearer ${data.accessToken}`;
-      return api(error.config);
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Usage example
-const login = async (email: string, password: string) => {
-  const { data } = await api.post('/login', { email, password });
-  localStorage.setItem('accessToken', data.accessToken);
-  return data.user;
-};
-
-const getProtectedData = async () => {
-  const token = localStorage.getItem('accessToken');
-  const { data } = await api.get('/protected', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return data;
-};
-```
-
-## Advanced Configuration
-
-```typescript
-const auth = new Tokenly({
-  accessTokenExpiry: '15m',
-  refreshTokenExpiry: '7d',
-  cookieOptions: {
-    secure: true,
-    httpOnly: true,
-    sameSite: 'strict'
-  },
   securityConfig: {
     enableFingerprint: true,
-    maxDevices: 5,
-    revokeOnSecurityBreach: true
+    maxDevices: 5
   }
 });
+
+// Generate a token with device fingerprinting
+const token = auth.generateAccessToken(
+    { userId: '123' },
+    undefined,
+    {
+        userAgent: req.headers['user-agent'] || '',
+        ip: getClientIP(req)
+    }
+);
 ```
 
-## Security Features
+## 📘 API Reference
 
-- **HttpOnly Cookies**: Prevents XSS attacks
-- **Token Rotation**: Automatic refresh before expiration
-- **Device Fingerprinting**: Detect and limit concurrent sessions
-- **Token Blacklisting**: Revoke compromised tokens
-- **Auto Cleanup**: Automatic removal of expired tokens
-
-## API Reference
-
-### Token Generation
-```typescript
-const accessToken = auth.generateAccessToken(payload);
-const refreshToken = auth.generateRefreshToken(payload);
-```
-
-### Token Verification
-```typescript
-const verified = auth.verifyAccessToken(token);
-const refreshVerified = auth.verifyRefreshToken(token);
-```
-
-### Token Rotation
-```typescript
-const { accessToken, refreshToken } = auth.rotateTokens(currentRefreshToken);
-```
-
-### Event Handling
-```typescript
-auth.on('tokenExpiring', (data) => {
-  console.log('Token about to expire:', data);
-});
-```
-
-## Error Handling
+### Configuration
 
 ```typescript
-try {
-  const verified = auth.verifyAccessToken(token);
-} catch (error) {
-  if (error.message === 'Token has been revoked') {
-    // Handle revoked token
-  }
-  // Handle other errors
+interface TokenlyConfig {
+    // Token expiration time (default: '15m')
+    accessTokenExpiry?: string;
+    
+    // Security settings
+    securityConfig?: {
+        // Enable device fingerprinting (default: false)
+        enableFingerprint?: boolean;
+        // Maximum devices per user (default: 5)
+        maxDevices?: number;
+    };
 }
 ```
 
-## TypeScript Support
+### Token Generation
 
-Full TypeScript support with detailed type definitions included.
+```typescript
+// Helper for reliable IP detection
+function getClientIP(req: express.Request): string {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (typeof forwardedFor === 'string') {
+        return forwardedFor.split(',')[0].trim();
+    }
+    return req.ip || '';
+}
 
-## License
+// Express implementation example
+app.post('/login', async (req, res) => {
+    try {
+        const token = auth.generateAccessToken(
+            { userId: user.id },
+            undefined,
+            {
+                userAgent: req.headers['user-agent'] || '',
+                ip: getClientIP(req)
+            }
+        );
+        res.json({ token });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+```
+
+### Token Structure
+
+```typescript
+interface AccessToken {
+    // JWT token string
+    raw: string;
+    
+    // Token payload
+    payload: {
+        userId: string;
+        fingerprint?: string;  // Present when fingerprinting is enabled
+        aud: string;          // 'tokenly-client'
+        iss: string;          // 'tokenly-auth'
+        iat: string;          // Issue timestamp
+        exp: string;          // Expiration timestamp
+    };
+}
+```
+
+## 🔒 Security Best Practices
+
+### Device Fingerprinting
+- **Unique Identification**: Each device is uniquely identified by its IP and User-Agent combination
+- **Consistent Tracking**: Same device will generate the same fingerprint across sessions
+- **Fraud Prevention**: Helps detect and prevent unauthorized access attempts
+
+### IP Detection
+- Always handle `X-Forwarded-For` headers properly in proxy environments
+- Use the first IP in the chain as it represents the original client
+- Implement appropriate fallbacks for direct connections
+
+### User Agent Handling
+- Use complete User-Agent strings for maximum accuracy
+- Provide fallbacks for empty values
+- Maintain original User-Agent format
+
+## 📚 Examples
+
+### Basic Implementation
+```typescript
+const auth = new Tokenly();
+
+// Generate token
+const token = auth.generateAccessToken({ userId: '123' });
+```
+
+### With Fingerprinting
+```typescript
+const auth = new Tokenly({
+    securityConfig: { enableFingerprint: true }
+});
+
+// Generate token with device tracking
+const token = auth.generateAccessToken(
+    { userId: '123' },
+    undefined,
+    { userAgent, ip }
+);
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
 
 MIT © [Nekzus](https://github.com/Nekzus)
 

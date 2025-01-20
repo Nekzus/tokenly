@@ -78,6 +78,8 @@ export class Tokenly {
   private tokenCache: Map<string, TokenlyResponse>;
   private eventListeners: Map<string, Function[]>;
   private autoRotationInterval: NodeJS.Timeout | null = null;
+  private fingerprintCache: Map<string, string> = new Map();
+  private readonly instanceSalt: string;
 
   /**
    * Initialize Tokenly with custom configuration
@@ -134,6 +136,9 @@ export class Tokenly {
 
     this.eventListeners = new Map();
     this.tokenCache = new Map();
+
+    // Generar un salt único por instancia
+    this.instanceSalt = crypto.randomBytes(32).toString('hex');
   }
 
   /**
@@ -166,8 +171,8 @@ export class Tokenly {
       raw: token,
       payload: {
         ...payloadWithoutDates,
-        iat: iat ? new Date(iat * 1000) : undefined,
-        exp: exp ? new Date(exp * 1000) : undefined,
+        iat: iat ? this.formatDate(iat) : undefined,
+        exp: exp ? this.formatDate(exp) : undefined,
       }
     };
 
@@ -177,26 +182,41 @@ export class Tokenly {
   /**
    * Genera una huella digital del dispositivo/navegador
    */
-  private generateFingerprint(context: { userAgent: string; ip: string; additionalData?: string }): string {
-    if (!context.userAgent || !context.ip) {
-      throw new Error('Invalid context for fingerprint generation');
+  private generateFingerprint(context: { userAgent: string; ip: string }): string {
+    if (!context?.userAgent?.trim() || !context?.ip?.trim()) {
+        throw new Error('Invalid or empty context values');
     }
 
-    // Normalizar valores
-    const normalizedUA = context.userAgent.trim();
-    const normalizedIP = context.ip.trim();
+    // Normalización
+    const normalizedUA = context.userAgent
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+    
+    const normalizedIP = context.ip
+        .trim()
+        .toLowerCase()
+        .replace(/[^0-9.]/g, '');
 
-    // Usar un separador único para evitar colisiones
-    const fingerprintData = JSON.stringify({
-      ua: normalizedUA,
-      ip: normalizedIP,
-      additional: context.additionalData || ''
-    });
+    // Crear hashes individuales con entropy adicional
+    const uaHash = crypto
+        .createHash('sha256')
+        .update(`ua:${this.instanceSalt}:${normalizedUA}`)
+        .digest('hex');
+    
+    const ipHash = crypto
+        .createHash('sha256')
+        .update(`ip:${this.instanceSalt}:${normalizedIP}`)
+        .digest('hex');
 
+    // Combinar hashes con prefijos para garantizar unicidad
+    const combinedData = `ua=${uaHash}|ip=${ipHash}`;
+
+    // Hash final
     return crypto
-      .createHash('sha256')
-      .update(fingerprintData)
-      .digest('hex');
+        .createHash('sha256')
+        .update(combinedData)
+        .digest('hex');
   }
 
   /**
@@ -275,7 +295,7 @@ export class Tokenly {
   generateAccessToken(
     payload: object,
     options?: jwt.SignOptions,
-    context?: { userAgent: string; ip: string; additionalData?: string }
+    context?: { userAgent: string; ip: string }
   ): TokenlyResponse {
     this.validatePayload(payload);
     const finalPayload: { [key: string]: any } = { ...payload };
@@ -283,17 +303,7 @@ export class Tokenly {
     if (this.securityConfig.enableFingerprint && context) {
       const fingerprint = this.generateFingerprint(context);
       const userId = (payload as any).userId;
-      
-      if (!this.deviceTokens.has(userId)) {
-        this.deviceTokens.set(userId, new Set());
-      }
-      
-      const userDevices = this.deviceTokens.get(userId)!;
-      if (userDevices.size >= this.securityConfig.maxDevices && !userDevices.has(fingerprint)) {
-        throw new Error('Maximum number of devices reached');
-      }
-      
-      userDevices.add(fingerprint);
+      this.handleDeviceStorage(userId, fingerprint);
       finalPayload.fingerprint = fingerprint;
     }
 
@@ -304,7 +314,7 @@ export class Tokenly {
     });
 
     const response = this.decodeWithReadableDates(token);
-    this.tokenCache.set(token, response);
+    this.cacheToken(token, response);
     return response;
   }
 
@@ -317,7 +327,7 @@ export class Tokenly {
     token: string,
     context?: { userAgent: string; ip: string; additionalData?: string }
   ): TokenlyResponse {
-    if (this.revokedTokens.has(token)) {
+    if (this.revokedTokens.has(token) || this.isTokenBlacklisted(token)) {
       throw new Error('Token has been revoked');
     }
 
@@ -335,7 +345,7 @@ export class Tokenly {
     }
 
     const response = this.decodeWithReadableDates(token, verified);
-    this.tokenCache.set(token, response);
+    this.cacheToken(token, response);
     return response;
   }
 
@@ -520,21 +530,6 @@ export class Tokenly {
   }
 
   /**
-   * Mejorar la seguridad de las cookies con flags adicionales
-   */
-  private getEnhancedCookieOptions(): CookieOptions {
-    return {
-      ...this.cookieOptions,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
-      path: '/',
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    };
-  }
-
-  /**
    * Validar un refresh token con verificaciones adicionales de seguridad
    */
   public verifyRefreshTokenEnhanced(token: string): TokenlyResponse {
@@ -688,31 +683,21 @@ export class Tokenly {
     }, interval);
   }
 
-  private findTokenByFingerprint(fingerprint: string): string | null {
-    for (const [, devices] of this.deviceTokens.entries()) {
-      if (devices.has(fingerprint)) {
-        return this.getToken();
-      }
-    }
-    return null;
-  }
-
-  private async validateDeviceLimit(userId: string, fingerprint: string): Promise<void> {
+  private handleDeviceStorage(userId: string, fingerprint: string): void {
     if (!this.deviceTokens.has(userId)) {
       this.deviceTokens.set(userId, new Set());
     }
 
     const userDevices = this.deviceTokens.get(userId)!;
-    
-    if (userDevices.size >= this.securityConfig.maxDevices && !userDevices.has(fingerprint)) {
-      this.emit('maxDevicesReached', {
-        userId,
-        currentDevices: Array.from(userDevices),
-        maxDevices: this.securityConfig.maxDevices
-      });
-      throw new Error('Maximum number of devices reached');
+    const deviceKey = `${userId}:${fingerprint}`;
+
+    if (!this.fingerprintCache.has(deviceKey)) {
+      if (userDevices.size >= this.securityConfig.maxDevices) {
+        throw new Error('Maximum number of devices reached');
+      }
+      this.fingerprintCache.set(deviceKey, fingerprint);
     }
-    
+
     userDevices.add(fingerprint);
   }
 }
@@ -723,15 +708,6 @@ interface TokenInfo {
   expiresAt: Date;
   issuedAt: Date;
   fingerprint?: string;
-}
-
-interface CookieOptions {
-  httpOnly: boolean;
-  secure: boolean;
-  sameSite: 'strict' | 'lax' | 'none';
-  path: string;
-  expires?: Date;
-  maxAge?: number;
 }
 
 interface TokenSecurityAnalysis {

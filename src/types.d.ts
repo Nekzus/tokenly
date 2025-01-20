@@ -1,3 +1,11 @@
+export interface AccessToken {
+  raw: string;
+  payload: {
+    userId: string;
+    [key: string]: any;
+  };
+}
+
 export interface TokenlyConfig {
   accessTokenExpiry: string;
   refreshTokenExpiry: string;

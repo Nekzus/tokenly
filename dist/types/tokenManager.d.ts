@@ -67,6 +67,8 @@ export declare class Tokenly {
     private tokenCache;
     private eventListeners;
     private autoRotationInterval;
+    private fingerprintCache;
+    private readonly instanceSalt;
     /**
      * Initialize Tokenly with custom configuration
      * @param config Optional configuration for token management
@@ -108,7 +110,6 @@ export declare class Tokenly {
     generateAccessToken(payload: object, options?: jwt.SignOptions, context?: {
         userAgent: string;
         ip: string;
-        additionalData?: string;
     }): TokenlyResponse;
     /**
      * Verify an access token
@@ -180,10 +181,6 @@ export declare class Tokenly {
      */
     generateOneTimeToken(purpose: string, expiresIn?: string): string;
     /**
-     * Mejorar la seguridad de las cookies con flags adicionales
-     */
-    private getEnhancedCookieOptions;
-    /**
      * Validar un refresh token con verificaciones adicionales de seguridad
      */
     verifyRefreshTokenEnhanced(token: string): TokenlyResponse;
@@ -196,8 +193,7 @@ export declare class Tokenly {
     disableAutoRotation(): void;
     private checkTokensExpiration;
     enableAutoCleanup(interval?: number): void;
-    private findTokenByFingerprint;
-    private validateDeviceLimit;
+    private handleDeviceStorage;
 }
 interface TokenInfo {
     userId: string;

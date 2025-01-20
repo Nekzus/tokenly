@@ -79,29 +79,39 @@ export class Tokenly {
   private eventListeners: Map<string, Function[]>;
   private autoRotationInterval: NodeJS.Timeout | null = null;
   private fingerprintCache: Map<string, string> = new Map();
-  private readonly instanceSalt: string;
+  private readonly instanceId: string;
 
   /**
    * Initialize Tokenly with custom configuration
    * @param config Optional configuration for token management
    */
   constructor(config?: TokenlyConfig) {
-    this.secretAccess = process.env.JWT_SECRET_ACCESS || 'default-secret-access';
-    this.secretRefresh = process.env.JWT_SECRET_REFRESH || 'default-secret-refresh';
+    this.instanceId = crypto.randomBytes(16).toString('hex');
+
+    this.secretAccess = process.env.JWT_SECRET_ACCESS || this.generateSecret('access');
+    this.secretRefresh = process.env.JWT_SECRET_REFRESH || this.generateSecret('refresh');
+
+    if (!process.env.JWT_SECRET_ACCESS || !process.env.JWT_SECRET_REFRESH) {
+      console.warn(
+        '\x1b[33m%s\x1b[0m',
+        `WARNING: Using auto-generated secrets. This is secure but tokens will be invalidated on server restart. 
+        For production, please set JWT_SECRET_ACCESS and JWT_SECRET_REFRESH environment variables.
+        Instance ID: ${this.instanceId}`
+      );
+    }
+
     this.accessTokenExpiry = config?.accessTokenExpiry || process.env.ACCESS_TOKEN_EXPIRY || '15m';
     this.refreshTokenExpiry = config?.refreshTokenExpiry || process.env.REFRESH_TOKEN_EXPIRY || '7d';
 
-    // Default secure cookie configuration
     this.cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       ...config?.cookieOptions,
     };
 
-    // Default secure JWT configuration
     this.jwtOptions = {
       algorithm: 'HS512',
       issuer: 'tokenly-auth',
@@ -109,23 +119,20 @@ export class Tokenly {
       ...config?.jwtOptions,
     };
 
-    // Configuración JWT para verificación
     this.verifyOptions = {
       algorithms: [this.jwtOptions.algorithm as jwt.Algorithm],
       issuer: this.jwtOptions.issuer,
       audience: this.jwtOptions.audience,
-      clockTolerance: 30, // 30 segundos de tolerancia solo para verificación
+      clockTolerance: 30,
     };
 
-    // Configuración de rotación automática
     this.rotationConfig = {
       enableAutoRotation: true,
-      rotationInterval: 60, // 60 minutos
+      rotationInterval: 60,
       maxRotationCount: 100,
       ...config?.rotationConfig,
     };
 
-    // Configuración de seguridad
     this.securityConfig = {
       enableFingerprint: true,
       enableBlacklist: true,
@@ -136,9 +143,13 @@ export class Tokenly {
 
     this.eventListeners = new Map();
     this.tokenCache = new Map();
+  }
 
-    // Generar un salt único por instancia
-    this.instanceSalt = crypto.randomBytes(32).toString('hex');
+  private generateSecret(type: 'access' | 'refresh'): string {
+    return crypto
+      .createHash('sha256')
+      .update(`${this.instanceId}-${type}-${Date.now()}`)
+      .digest('hex');
   }
 
   /**
@@ -187,7 +198,6 @@ export class Tokenly {
         throw new Error('Invalid or empty context values');
     }
 
-    // Normalización
     const normalizedUA = context.userAgent
         .trim()
         .toLowerCase()
@@ -198,21 +208,18 @@ export class Tokenly {
         .toLowerCase()
         .replace(/[^0-9.]/g, '');
 
-    // Crear hashes individuales con entropy adicional
     const uaHash = crypto
         .createHash('sha256')
-        .update(`ua:${this.instanceSalt}:${normalizedUA}`)
+        .update(`ua:${this.instanceId}:${normalizedUA}`)
         .digest('hex');
     
     const ipHash = crypto
         .createHash('sha256')
-        .update(`ip:${this.instanceSalt}:${normalizedIP}`)
+        .update(`ip:${this.instanceId}:${normalizedIP}`)
         .digest('hex');
 
-    // Combinar hashes con prefijos para garantizar unicidad
     const combinedData = `ua=${uaHash}|ip=${ipHash}`;
 
-    // Hash final
     return crypto
         .createHash('sha256')
         .update(combinedData)
@@ -247,39 +254,32 @@ export class Tokenly {
   }
 
   private validatePayload(payload: any): void {
-    // Validar que payload sea un objeto
     if (payload === null || typeof payload !== 'object') {
       throw new Error('Payload must be an object');
     }
     
-    // Validar que no esté vacío
     if (Object.keys(payload).length === 0) {
       throw new Error('Payload cannot be empty');
     }
 
-    // Validar que tenga userId
     if (!Object.prototype.hasOwnProperty.call(payload, 'userId')) {
       throw new Error('Payload must contain a userId');
     }
     
-    // Validar que userId no sea null o undefined
     if (payload.userId === null || payload.userId === undefined) {
       throw new Error('userId cannot be null or undefined');
     }
 
-    // Validar que userId no esté vacío
     if (typeof payload.userId !== 'string' || !payload.userId.trim()) {
       throw new Error('userId cannot be empty');
     }
 
-    // Validar que ninguna propiedad sea null o undefined
     Object.entries(payload).forEach(([key, value]) => {
       if (value === null || value === undefined) {
         throw new Error(`Payload property '${key}' cannot be null or undefined`);
       }
     });
 
-    // Validar tamaño del payload
     const payloadSize = JSON.stringify(payload).length;
     if (payloadSize > 8192) {
       throw new Error('Payload size exceeds maximum allowed size');
@@ -362,7 +362,6 @@ export class Tokenly {
     this.validatePayload(payload);
     const finalPayload: { [key: string]: any } = { ...payload };
     
-    // Eliminar propiedades JWT existentes
     delete (finalPayload as any).aud;
     delete (finalPayload as any).iss;
     delete (finalPayload as any).exp;
@@ -413,7 +412,6 @@ export class Tokenly {
     const verified = this.verifyRefreshToken(refreshToken);
     const { iat, exp, aud, iss, ...payload } = verified.payload;
 
-    // Verificar límite de rotaciones
     const tokenId = refreshToken;
     const currentCount = this.rotationCounts.get(tokenId) || 0;
     
@@ -546,7 +544,6 @@ export class Tokenly {
     return verified;
   }
 
-  // Sistema de eventos
   public on(event: string, callback: Function): void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, []);
@@ -561,23 +558,19 @@ export class Tokenly {
         try {
           callback(data);
         } catch (error) {
-          // Silent error handling for callbacks
         }
       });
     }
   }
 
-  // Sistema de caché con auto-limpieza
   private cacheToken(key: string, value: TokenlyResponse): void {
     this.tokenCache.set(key, value);
-    
-    // Auto-limpieza después de 5 minutos
+
     setTimeout(() => {
       this.tokenCache.delete(key);
     }, 5 * 60 * 1000);
   }
 
-  // Análisis de seguridad del token
   public analyzeTokenSecurity(token: string): TokenSecurityAnalysis {
     const decoded = jwt.decode(token, { complete: true }) as { 
       header: { alg: string }, 
@@ -595,26 +588,21 @@ export class Tokenly {
     };
   }
 
-  // Calcular la fortaleza del token
   private calculateTokenStrength(decodedToken: any): 'weak' | 'medium' | 'strong' {
     let score = 0;
     
-    // Verificar algoritmo
     if (decodedToken.header.alg === 'HS512') score += 2;
     else if (decodedToken.header.alg === 'HS256') score += 1;
     
-    // Verificar fingerprint
     if (decodedToken.payload.fingerprint) score += 2;
     
-    // Verificar tiempo de expiración
     const timeUntilExpiry = (decodedToken.payload.exp * 1000) - Date.now();
-    if (timeUntilExpiry < 15 * 60 * 1000) score += 1; // < 15 minutos
-    else if (timeUntilExpiry < 60 * 60 * 1000) score += 2; // < 1 hora
+    if (timeUntilExpiry < 15 * 60 * 1000) score += 1; 
+    else if (timeUntilExpiry < 60 * 60 * 1000) score += 2;
     
     return score <= 2 ? 'weak' : score <= 4 ? 'medium' : 'strong';
   }
 
-  // Rotación automática de tokens
   public enableAutoRotation(options: AutoRotationOptions = {}): NodeJS.Timeout {
     console.log('Enabling auto rotation...');
     const {
@@ -626,10 +614,8 @@ export class Tokenly {
       clearInterval(this.autoRotationInterval);
     }
 
-    // Ejecutar verificación inmediata
     this.checkTokensExpiration(rotateBeforeExpiry);
 
-    // Configurar nuevo intervalo
     this.autoRotationInterval = setInterval(() => {
       this.checkTokensExpiration(rotateBeforeExpiry);
     }, checkInterval);
@@ -637,7 +623,6 @@ export class Tokenly {
     return this.autoRotationInterval;
   }
 
-  // Método para detener la auto-rotación
   public disableAutoRotation(): void {
     if (this.autoRotationInterval) {
       clearInterval(this.autoRotationInterval);
@@ -660,13 +645,12 @@ export class Tokenly {
           }
         }
       } catch (error) {
-        // Silent error handling for token checks
+    
       }
     });
   }
 
-  // Limpieza automática de tokens revocados
-  public enableAutoCleanup(interval: number = 3600000): void { // 1 hora por defecto
+  public enableAutoCleanup(interval: number = 3600000): void { 
     setInterval(() => {
       const now = Date.now();
       this.revokedTokens.forEach(token => {
@@ -676,7 +660,6 @@ export class Tokenly {
             this.revokedTokens.delete(token);
           }
         } catch {
-          // Token inválido, eliminarlo
           this.revokedTokens.delete(token);
         }
       });
@@ -702,7 +685,6 @@ export class Tokenly {
   }
 }
 
-// Tipos adicionales
 interface TokenInfo {
   userId: string;
   expiresAt: Date;

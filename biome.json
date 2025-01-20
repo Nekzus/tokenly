@@ -4,7 +4,7 @@
     "enabled": true
   },
   "files": {
-    "include": ["src/**/*.{ts,tsx,js,jsx,json}"],
+    "include": ["src/**/*.{ts,tsx,js,jsx,json}", "tests/**/*.{ts,tsx,js,jsx,json}"],
     "ignore": ["node_modules", "dist", "examples"]
   },
   "linter": {

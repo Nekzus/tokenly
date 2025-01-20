@@ -68,12 +68,13 @@ export declare class Tokenly {
     private eventListeners;
     private autoRotationInterval;
     private fingerprintCache;
-    private readonly instanceSalt;
+    private readonly instanceId;
     /**
      * Initialize Tokenly with custom configuration
      * @param config Optional configuration for token management
      */
     constructor(config?: TokenlyConfig);
+    private generateSecret;
     /**
      * Format Unix timestamp to ISO date string
      * @param timestamp Unix timestamp in seconds

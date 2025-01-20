@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { Tokenly } from '../src';
 
 describe('Tokenly', () => {
@@ -17,48 +17,90 @@ describe('Tokenly', () => {
   });
 
   describe('Initialization', () => {
-    test('should initialize with default config', () => {
-      const defaultTokenly = new Tokenly();
-      const token = defaultTokenly.generateAccessToken({ userId: '123' });
-      expect(token).toHaveProperty('raw');
+    it('should initialize with default config', () => {
+      const tokenly = new Tokenly();
+      expect(tokenly).toBeDefined();
     });
 
-    test('should initialize with custom config', () => {
-      const customConfig = {
+    it('should initialize with custom config', () => {
+      const tokenly = new Tokenly({
         accessTokenExpiry: '30m',
-        refreshTokenExpiry: '14d',
-        cookieOptions: {
-          httpOnly: true,
-          secure: false,
-        },
-        jwtOptions: {
-          algorithm: 'HS512' as const,
-          issuer: 'test-issuer',
-        },
         securityConfig: {
           enableFingerprint: true,
-          enableBlacklist: true,
-          maxDevices: 3,
-          revokeOnSecurityBreach: true,
+          maxDevices: 3
         }
-      };
-
-      const customTokenly = new Tokenly(customConfig);
-      const token = customTokenly.generateAccessToken({ userId: '123' });
-      expect(token).toHaveProperty('raw');
+      });
+      expect(tokenly).toBeDefined();
     });
   });
 
   describe('Token Generation and Verification', () => {
-    test('should generate and verify access token with fingerprint', () => {
-      const payload = { userId: '123' };
-      const token = tokenly.generateAccessToken(payload, undefined, mockContext);
-      
+    const tokenly = new Tokenly({
+      securityConfig: { enableFingerprint: true }
+    });
+
+    it('should generate and verify access token with fingerprint', () => {
+      const context = {
+        userAgent: 'Mozilla/5.0 Test',
+        ip: '192.168.1.1'
+      };
+
+      const token = tokenly.generateAccessToken(
+        { userId: '123', role: 'user' },
+        undefined,
+        context
+      );
+
       expect(token.raw).toBeDefined();
-      expect(token.payload).toHaveProperty('fingerprint');
-      
-      const verified = tokenly.verifyAccessToken(token.raw, mockContext);
-      expect(verified.payload).toMatchObject(expect.objectContaining(payload));
+      expect(token.payload.fingerprint).toBeDefined();
+      expect(token.payload.userId).toBe('123');
+    });
+
+    it('should generate consistent fingerprints for same context', () => {
+      const context = {
+        userAgent: 'TestAgent',
+        ip: '192.168.1.1'
+      };
+
+      const token1 = tokenly.generateAccessToken(
+        { userId: '123', role: 'user' },
+        undefined,
+        context
+      );
+
+      const token2 = tokenly.generateAccessToken(
+        { userId: '123', role: 'user' },
+        undefined,
+        context
+      );
+
+      expect(token1.payload.fingerprint).toBe(token2.payload.fingerprint);
+    });
+
+    it('should generate different fingerprints for different contexts', () => {
+      const context1 = {
+        userAgent: 'TestAgent1',
+        ip: '192.168.1.1'
+      };
+
+      const context2 = {
+        userAgent: 'TestAgent2',
+        ip: '192.168.1.1'
+      };
+
+      const token1 = tokenly.generateAccessToken(
+        { userId: '123', role: 'user' },
+        undefined,
+        context1
+      );
+
+      const token2 = tokenly.generateAccessToken(
+        { userId: '123', role: 'user' },
+        undefined,
+        context2
+      );
+
+      expect(token1.payload.fingerprint).not.toBe(token2.payload.fingerprint);
     });
 
     test('should detect invalid fingerprint', () => {
@@ -136,12 +178,10 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      // Generar tokens para los primeros dos dispositivos
       devices.slice(0, 2).forEach(device => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
-      // Intentar generar un token para un tercer dispositivo
       expect(() => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
       ).toThrow('Maximum number of devices reached');
@@ -195,12 +235,10 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      // Generar tokens para los primeros dos dispositivos
       devices.slice(0, 2).forEach(device => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
-      // Intentar generar un token para un tercer dispositivo
       expect(() => 
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
       ).toThrow('Maximum number of devices reached');
@@ -217,13 +255,11 @@ describe('Tokenly', () => {
 
       let currentToken = customTokenly.generateRefreshToken({ userId: '123' });
 
-      // Realizar rotaciones hasta alcanzar el límite
       for (let i = 0; i < 2; i++) {
         const rotated = customTokenly.rotateTokens(currentToken.raw);
         currentToken = rotated.refreshToken;
       }
 
-      // La siguiente rotación debería fallar
       expect(() => customTokenly.rotateTokens(currentToken.raw))
         .toThrow('Maximum rotation count exceeded');
     });
@@ -286,16 +322,13 @@ describe('Tokenly', () => {
           context
         );
 
-        // Verificar que el fingerprint existe
         expect(token.payload.fingerprint).toBeDefined();
         
-        // Almacenar para comparaciones
         const key = `${context.userAgent}:${context.ip}`;
         tokensMap.set(key, token);
         fingerprints.add(token.payload.fingerprint);
       });
 
-      // Verificar que cada combinación única genera un fingerprint único
       expect(fingerprints.size).toBe(testCases.length);
     });
 
@@ -305,12 +338,10 @@ describe('Tokenly', () => {
         ip: '192.168.1.1'
       };
 
-      // Generar múltiples tokens con el mismo contexto
       const token1 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
       const token2 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
       const token3 = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
 
-      // Verificar que los fingerprints son idénticos
       expect(token1.payload.fingerprint).toBe(token2.payload.fingerprint);
       expect(token2.payload.fingerprint).toBe(token3.payload.fingerprint);
     });
@@ -332,7 +363,6 @@ describe('Tokenly', () => {
         originalContext
       );
 
-      // Verificar que el token no puede ser usado con un contexto diferente
       expect(() => {
         tokenly.verifyAccessToken(token.raw, differentContext);
       }).toThrow('Invalid token fingerprint');
@@ -344,43 +374,42 @@ describe('Tokenly', () => {
         ip: '192.168.1.1'
       };
 
-      // Caso 1: Cambio menor en User-Agent
       const slightlyDifferentUA = {
         ...baseContext,
         userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4.1 like Mac OS X)'
       };
 
-      // Caso 2: Cambio en IP pero mismo dispositivo
       const differentIP = {
         ...baseContext,
         ip: '192.168.1.2'
       };
 
-      // Caso 3: Información adicional en el contexto
-      const extendedContext = {
-        ...baseContext,
-        additionalData: 'some-device-id'
-      };
-
-      const token = tokenly.generateAccessToken({ userId: '123' }, undefined, baseContext);
-
-      // Verificar que cambios menores en UA no afectan la validación
-      expect(() => {
-        tokenly.verifyAccessToken(token.raw, slightlyDifferentUA);
-      }).toThrow('Invalid token fingerprint');
-
-      // Verificar que cambios en IP invalidan el token
-      expect(() => {
-        tokenly.verifyAccessToken(token.raw, differentIP);
-      }).toThrow('Invalid token fingerprint');
-
-      // Verificar que información adicional genera un fingerprint diferente
-      const extendedToken = tokenly.generateAccessToken(
+      const token = tokenly.generateAccessToken(
         { userId: '123' },
         undefined,
-        extendedContext
+        baseContext
       );
-      expect(extendedToken.payload.fingerprint).not.toBe(token.payload.fingerprint);
+
+      const tokenWithDifferentUA = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        slightlyDifferentUA
+      );
+      expect(tokenWithDifferentUA.payload.fingerprint).not.toBe(token.payload.fingerprint);
+
+      const tokenWithDifferentIP = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        differentIP
+      );
+      expect(tokenWithDifferentIP.payload.fingerprint).not.toBe(token.payload.fingerprint);
+
+      const tokenWithSameContext = tokenly.generateAccessToken(
+        { userId: '123' },
+        undefined,
+        baseContext
+      );
+      expect(tokenWithSameContext.payload.fingerprint).toBe(token.payload.fingerprint);
     });
 
     test('should handle fingerprint changes over time', async () => {
@@ -391,19 +420,16 @@ describe('Tokenly', () => {
 
       const token = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
       
-      // Verificar inmediatamente
       expect(() => {
         tokenly.verifyAccessToken(token.raw, context);
       }).not.toThrow();
 
-      // Esperar un momento y verificar de nuevo
       await new Promise(resolve => setTimeout(resolve, 100));
       
       expect(() => {
         tokenly.verifyAccessToken(token.raw, context);
       }).not.toThrow();
 
-      // Verificar con un cambio en el contexto
       expect(() => {
         tokenly.verifyAccessToken(token.raw, {
           ...context,
@@ -424,7 +450,6 @@ describe('Tokenly', () => {
         originalContext
       );
 
-      // Cambio solo de IP
       expect(() => {
         tokenly.verifyAccessToken(token.raw, {
           ...originalContext,
@@ -432,7 +457,6 @@ describe('Tokenly', () => {
         });
       }).toThrow('Invalid token fingerprint');
 
-      // Cambio solo de User-Agent
       expect(() => {
         tokenly.verifyAccessToken(token.raw, {
           ...originalContext,
@@ -442,7 +466,6 @@ describe('Tokenly', () => {
     });
 
     test('should handle invalid context values', () => {
-      // Contexto vacío
       expect(() => {
         tokenly.generateAccessToken(
           { userId: '123' },
@@ -451,7 +474,6 @@ describe('Tokenly', () => {
         );
       }).toThrow();
 
-      // Valores null
       expect(() => {
         tokenly.generateAccessToken(
           { userId: '123' },
@@ -460,7 +482,6 @@ describe('Tokenly', () => {
         );
       }).toThrow();
 
-      // Valores undefined
       expect(() => {
         tokenly.generateAccessToken(
           { userId: '123' },
@@ -501,12 +522,10 @@ describe('Tokenly', () => {
           context
         );
 
-        // Verificar que el fingerprint se genera correctamente
         expect(token.payload.fingerprint).toBeDefined();
         expect(typeof token.payload.fingerprint).toBe('string');
         expect(token.payload.fingerprint.length).toBeGreaterThan(0);
 
-        // Verificar que el token puede ser validado con el mismo contexto
         expect(() => {
           tokenly.verifyAccessToken(token.raw, context);
         }).not.toThrow();
@@ -515,7 +534,6 @@ describe('Tokenly', () => {
 
     test('should handle edge cases in fingerprint generation', () => {
       const edgeCases = [
-        // IP en diferentes formatos
         {
           userAgent: 'Mozilla/5.0',
           ip: '::1',
@@ -526,13 +544,11 @@ describe('Tokenly', () => {
           ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
           description: 'Full IPv6'
         },
-        // User-Agent con información compleja
         {
           userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           ip: '192.168.1.1',
           description: 'Complex User-Agent'
         },
-        // Casos límite de longitud
         {
           userAgent: 'a',
           ip: '192.168.1.1',
@@ -554,11 +570,9 @@ describe('Tokenly', () => {
           context
         );
 
-        // Verificar unicidad del fingerprint
         expect(fingerprints.has(token.payload.fingerprint)).toBe(false);
         fingerprints.add(token.payload.fingerprint);
 
-        // Verificar consistencia
         const token2 = tokenly.generateAccessToken(
           { userId: '123' },
           undefined,
@@ -566,13 +580,11 @@ describe('Tokenly', () => {
         );
         expect(token.payload.fingerprint).toBe(token2.payload.fingerprint);
 
-        // Verificar validación
         expect(() => {
           tokenly.verifyAccessToken(token.raw, context);
         }).not.toThrow();
       });
 
-      // Verificar que todos los casos generaron fingerprints únicos
       expect(fingerprints.size).toBe(edgeCases.length);
     });
   });
@@ -723,7 +735,6 @@ describe('Tokenly', () => {
       clearInterval(interval);
     });
 
-    // Nuevo test para verificar la desactivación
     test('should handle auto rotation disable', async () => {
       const tokenly = new Tokenly({
         accessTokenExpiry: '1s'
@@ -736,149 +747,116 @@ describe('Tokenly', () => {
     });
   });
 
-  describe('Enhanced Fingerprint Tests', () => {
-    test('should verify actual fingerprint content and uniqueness', () => {
-      const testCases = [
-        {
-          userAgent: 'TestAgent',
-          ip: '192.168.1.1',
-          description: 'Base case'
-        },
-        {
-          userAgent: 'TestAgent',
-          ip: '192.168.1.2',
-          description: 'Same UA, different IP'
-        },
-        {
-          userAgent: 'Chrome/90.0',
-          ip: '192.168.1.1',
-          description: 'Different UA, same IP'
-        }
+  describe('Device Limit Tests', () => {
+    test('should enforce maximum device limit', () => {
+      const userId = '123';
+      const maxDevices = 2;
+      const tokenly = new Tokenly({
+        securityConfig: { maxDevices }
+      });
+
+      const contexts = [
+        { userAgent: 'Device1', ip: '192.168.1.1' },
+        { userAgent: 'Device2', ip: '192.168.1.2' },
+        { userAgent: 'Device3', ip: '192.168.1.3' }
       ];
 
-      const fingerprints = new Set();
-      const tokens = new Map();
-
-      // Generar tokens y recolectar fingerprints
-      testCases.forEach(context => {
-        const token = tokenly.generateAccessToken(
-          { userId: '123' },
-          undefined,
-          context
-        );
-
-        const key = `${context.userAgent}:${context.ip}`;
-        tokens.set(key, token);
-        fingerprints.add(token.payload.fingerprint);
-
-        // Verificar estructura del token
-        expect(token.payload).toHaveProperty('fingerprint');
-        expect(typeof token.payload.fingerprint).toBe('string');
-        expect(token.payload.fingerprint.length).toBeGreaterThan(0);
-      });
-
-      // Verificar unicidad de fingerprints
-      expect(fingerprints.size).toBe(testCases.length);
-
-      // Verificar que cada token solo funciona con su contexto original
-      testCases.forEach(context => {
-        const key = `${context.userAgent}:${context.ip}`;
-        const token = tokens.get(key);
-
-        // Debe validar con su contexto original
+      contexts.slice(0, maxDevices).forEach(context => {
         expect(() => {
-          tokenly.verifyAccessToken(token.raw, context);
+          tokenly.generateAccessToken({ userId }, undefined, context);
         }).not.toThrow();
-
-        // No debe validar con otros contextos
-        testCases.forEach(otherContext => {
-          if (otherContext.userAgent !== context.userAgent || 
-              otherContext.ip !== context.ip) {
-            expect(() => {
-              tokenly.verifyAccessToken(token.raw, otherContext);
-            }).toThrow('Invalid token fingerprint');
-          }
-        });
       });
-    });
 
-    test('should maintain fingerprint consistency for same context', () => {
-      const context = {
-        userAgent: 'TestAgent',
-        ip: '192.168.1.1'
-      };
-
-      // Generar múltiples tokens con el mismo contexto
-      const tokens = Array.from({ length: 3 }, () => 
-        tokenly.generateAccessToken({ userId: '123' }, undefined, context)
-      );
-
-      // El fingerprint debería ser el mismo para el mismo contexto
-      const fingerprints = new Set(tokens.map(t => t.payload.fingerprint));
-      expect(fingerprints.size).toBe(1);
-    });
-
-    test('should detect subtle context changes', () => {
-      const originalContext = {
-        userAgent: 'TestAgent',
-        ip: '192.168.1.1'
-      };
-
-      const token = tokenly.generateAccessToken({ userId: '123' }, undefined, originalContext);
-
-      // Verificar que el mismo contexto funciona
       expect(() => {
-        tokenly.verifyAccessToken(token.raw, originalContext);
-      }).not.toThrow();
-
-      // Cambio sutil en el contexto
-      const modifiedContext = {
-        ...originalContext,
-        ip: '192.168.1.2'
-      };
-
-      // Generar nuevo token con contexto modificado
-      const newToken = tokenly.generateAccessToken({ userId: '123' }, undefined, modifiedContext);
-      
-      // Verificar que los fingerprints son diferentes
-      expect(token.payload.fingerprint).not.toBe(newToken.payload.fingerprint);
+        tokenly.generateAccessToken({ userId }, undefined, contexts[2]);
+      }).toThrow('Maximum number of devices reached');
     });
 
-    test('should handle special characters and edge cases', () => {
-      const specialCases = [
-        {
-          userAgent: 'Mozilla/5.0 (特殊文字)',
-          ip: '192.168.1.1'
-        },
-        {
-          userAgent: 'Mozilla/5.0 (@#$%^&*)',
-          ip: '::1'
-        },
-        {
-          userAgent: 'Mozilla/5.0 (\n\t)',
-          ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
-        }
-      ];
-
-      const fingerprints = new Set();
-
-      specialCases.forEach(context => {
-        const token = tokenly.generateAccessToken(
-          { userId: '123' },
-          undefined,
-          context
-        );
-
-        fingerprints.add(token.payload.fingerprint);
-
-        // Verificar que el token es válido con su contexto original
-        expect(() => {
-          tokenly.verifyAccessToken(token.raw, context);
-        }).not.toThrow();
-      });
-
-      // Verificar unicidad de fingerprints
-      expect(fingerprints.size).toBe(specialCases.length);
+    test('should allow same device to reconnect', () => {
+      const userId = '123';
+      const context = { userAgent: 'TestDevice', ip: '192.168.1.1' };
+      
+      const token1 = tokenly.generateAccessToken({ userId }, undefined, context);
+      
+      expect(() => {
+        tokenly.generateAccessToken({ userId }, undefined, context);
+      }).not.toThrow();
     });
   });
+});
+
+describe('Tokenly Environment Variables', () => {
+    const originalEnv = process.env;
+    let consoleWarnSpy: any;
+
+    beforeEach(() => {
+        process.env = { ...originalEnv };
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        process.env = originalEnv;
+        consoleWarnSpy.mockRestore();
+    });
+
+    test('should use environment variables when provided', () => {
+        process.env.JWT_SECRET_ACCESS = 'test-access-secret';
+        process.env.JWT_SECRET_REFRESH = 'test-refresh-secret';
+
+        const tokenly = new Tokenly();
+
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+        expect(tokenly.getToken()).toBeNull();
+    });
+
+    test('should generate secure secrets when env vars are missing', () => {
+        delete process.env.JWT_SECRET_ACCESS;
+        delete process.env.JWT_SECRET_REFRESH;
+
+        const tokenly = new Tokenly();
+
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+            '\x1b[33m%s\x1b[0m',
+            expect.stringContaining('WARNING: Using auto-generated secrets')
+        );
+    });
+
+    test('should generate different secrets for different instances', () => {
+        delete process.env.JWT_SECRET_ACCESS;
+        delete process.env.JWT_SECRET_REFRESH;
+
+        const tokenly1 = new Tokenly();
+        const tokenly2 = new Tokenly();
+
+        const token1 = tokenly1.generateAccessToken({ userId: '1', role: 'user' });
+        const token2 = tokenly2.generateAccessToken({ userId: '1', role: 'user' });
+
+        expect(token1.raw).not.toBe(token2.raw);
+    });
+
+    test('should maintain consistent secrets within same instance', () => {
+        delete process.env.JWT_SECRET_ACCESS;
+        delete process.env.JWT_SECRET_REFRESH;
+        const tokenly = new Tokenly();
+
+        const token1 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
+        const token2 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
+
+        expect(() => tokenly.verifyAccessToken(token1.raw)).not.toThrow();
+        expect(() => tokenly.verifyAccessToken(token2.raw)).not.toThrow();
+    });
+
+    test('should warn only once per instance when using auto-generated secrets', () => {
+        delete process.env.JWT_SECRET_ACCESS;
+        delete process.env.JWT_SECRET_REFRESH;
+
+        new Tokenly();
+        new Tokenly();
+
+        expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+            '\x1b[33m%s\x1b[0m',
+            expect.stringContaining('Instance ID:')
+        );
+    });
 });

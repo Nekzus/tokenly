@@ -1,11 +1,3 @@
-export interface AccessToken {
-  raw: string;
-  payload: {
-    userId: string;
-    [key: string]: any;
-  };
-}
-
 export interface TokenlyConfig {
   accessTokenExpiry: string;
   refreshTokenExpiry: string;
@@ -16,16 +8,43 @@ export interface TokenlyConfig {
   }
 }
 
-export interface TokenlyResponse {
-  raw: string;
-  payload: any;
+export interface TokenContext {
+  userAgent: string;
+  ip: string;
 }
 
-export class Tokenly {
-  constructor(options: TokenlyConfig);
-  generateAccessToken(payload: { userId: string; role: string }): TokenlyResponse;
-  verifyAccessToken(token: string): TokenlyResponse;
-  on(event: string, callback: (data: { token: string; userId: string; expiresIn: number }) => void): void;
-  enableAutoRotation(options: { checkInterval: number; rotateBeforeExpiry: number }): void;
-  disableAutoRotation(): void;
-} 
+export interface AccessToken {
+  raw: string;
+  payload: {
+    userId: string;
+    role: string;
+    [key: string]: any;
+  };
+}
+
+export type Headers = Record<string, string | string[] | undefined>;
+
+export interface InvalidFingerprintEvent {
+  type: 'invalid_fingerprint';
+  userId: string;
+  token: string;
+  context: {
+    expectedFingerprint: string;
+    receivedFingerprint: string;
+    ip: string;
+    userAgent: string;
+    timestamp: string;
+  };
+}
+
+export interface MaxDevicesEvent {
+  type: 'max_devices_reached';
+  userId: string;
+  context: {
+    currentDevices: number;
+    maxAllowed: number;
+    ip: string;
+    userAgent: string;
+    timestamp: string;
+  };
+}

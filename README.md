@@ -39,15 +39,28 @@ _Enterprise-grade security by default for modern applications_
 ```bash
 npm install @nekzus/tokenly
 ```
+### Required Dependencies
+```bash
+npm install cookie-parser
+```
+
+> ⚠️ **Important**: `cookie-parser` is required for secure handling of refresh tokens with HttpOnly cookies.
 
 ## 🚀 Quick Start
 
 ```typescript
 import { Tokenly, getClientIP } from '@nekzus/tokenly';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Express
+const app = express();
+
+// Required middleware for refresh tokens
+app.use(cookieParser());
 
 // Initialize Tokenly
 const auth = new Tokenly({
@@ -228,6 +241,12 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 - Implement refresh token rotation
 - Enable blacklisting for critical applications
 
+### Refresh Token Security
+- Use HttpOnly cookies for refresh tokens
+- Configure cookie-parser middleware
+- Enable secure and sameSite options in production
+- Implement proper CORS configuration when needed
+
 ### Device Management
 - Enable fingerprinting for sensitive applications
 - Set reasonable device limits per user
@@ -245,4 +264,5 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## 📄 License
 
 MIT © [Nekzus](https://github.com/Nekzus)
+
 

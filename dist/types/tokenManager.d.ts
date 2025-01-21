@@ -120,7 +120,6 @@ export declare class Tokenly {
     verifyAccessToken(token: string, context?: {
         userAgent: string;
         ip: string;
-        additionalData?: string;
     }): TokenlyResponse;
     /**
      * Generate a new refresh token with HttpOnly cookie configuration

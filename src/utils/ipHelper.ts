@@ -6,7 +6,11 @@ import { Headers } from '../types.js';
  * @param defaultIP Optional default IP if no headers found
  * @returns string Client IP address
  */
-export function getClientIP(headers: Headers, defaultIP?: string): string {
+export function getClientIP(headers: Headers, defaultIP: string = '0.0.0.0'): string {
+    if (!headers || typeof headers !== 'object') {
+        return defaultIP;
+    }
+
     const realIP = headers['x-real-ip'];
     if (typeof realIP === 'string' && realIP.trim()) {
         return realIP.trim();
@@ -14,8 +18,9 @@ export function getClientIP(headers: Headers, defaultIP?: string): string {
 
     const forwardedFor = headers['x-forwarded-for'];
     if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
-        return forwardedFor.split(',')[0].trim();
+        const ips = forwardedFor.split(',');
+        return ips[0].trim() || defaultIP;
     }
 
-    return defaultIP || '';
+    return defaultIP;
 }

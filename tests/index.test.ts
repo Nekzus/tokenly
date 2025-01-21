@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { Tokenly } from '../src';
+import { ErrorCode, ErrorMessages } from '../src/utils/errorHandler';
 
 describe('Tokenly', () => {
   let tokenly: Tokenly;
@@ -216,7 +217,8 @@ describe('Tokenly', () => {
       const token = customTokenly.generateAccessToken({ userId: '123' });
       
       await new Promise(resolve => setTimeout(resolve, 100));
-      expect(() => customTokenly.verifyAccessToken(token.raw)).toThrow('jwt expired');
+      expect(() => customTokenly.verifyAccessToken(token.raw))
+        .toThrow(ErrorMessages[ErrorCode.TOKEN_EXPIRED]);
     });
 
     test('should handle concurrent device management', () => {
@@ -589,44 +591,166 @@ describe('Tokenly', () => {
     });
   });
 
-  describe('Error Handling and Edge Cases', () => {
-    test('should handle token expiration correctly', async () => {
-      const customTokenly = new Tokenly({
-        accessTokenExpiry: '1ms'
-      });
-      
-      const token = customTokenly.generateAccessToken({ userId: '123' });
-      await new Promise(resolve => setTimeout(resolve, 100));
-      expect(() => customTokenly.verifyAccessToken(token.raw)).toThrow('jwt expired');
-    });
-
-    test('should handle payload validation', () => {
+  describe('Error Handling', () => {
+    test('should handle payload validation errors', () => {
       const testCases = [
         {
           payload: null,
-          expectedError: 'Payload must be an object'
+          expectedError: ErrorMessages[ErrorCode.INVALID_PAYLOAD]
         },
         {
           payload: {},
-          expectedError: 'Payload cannot be empty'
+          expectedError: ErrorMessages[ErrorCode.EMPTY_PAYLOAD]
         },
         {
           payload: { foo: 'bar' },
-          expectedError: 'Payload must contain a userId'
-        },
-        {
-          payload: { userId: null },
-          expectedError: 'userId cannot be null or undefined'
+          expectedError: ErrorMessages[ErrorCode.MISSING_USER_ID]
         },
         {
           payload: { userId: '' },
-          expectedError: 'userId cannot be empty'
+          expectedError: ErrorMessages[ErrorCode.INVALID_USER_ID]
         }
       ];
 
       testCases.forEach(({ payload, expectedError }) => {
-        expect(() => tokenly.generateAccessToken(payload as any)).toThrowError(expectedError);
+        expect(() => tokenly.generateAccessToken(payload as any))
+          .toThrow(expectedError);
       });
+    });
+
+    test('should handle device limit errors', () => {
+      const userId = '123';
+      const maxDevices = 2;
+      const tokenly = new Tokenly({
+        securityConfig: { maxDevices }
+      });
+
+      const contexts = [
+        { userAgent: 'Device1', ip: '192.168.1.1' },
+        { userAgent: 'Device2', ip: '192.168.1.2' },
+        { userAgent: 'Device3', ip: '192.168.1.3' }
+      ];
+
+      contexts.slice(0, maxDevices).forEach(context => {
+        expect(() => {
+          tokenly.generateAccessToken({ userId }, undefined, context);
+        }).not.toThrow();
+      });
+
+      expect(() => {
+        tokenly.generateAccessToken({ userId }, undefined, contexts[2]);
+      }).toThrow(ErrorMessages[ErrorCode.MAX_DEVICES_REACHED]);
+    });
+
+    describe('Context Errors', () => {
+      test('should throw INVALID_CONTEXT error when context is incomplete', () => {
+        expect(() => {
+          tokenly.generateAccessToken(
+            { userId: '123' },
+            undefined,
+            { userAgent: '', ip: '' }
+          );
+        }).toThrow('Invalid or empty context values');
+
+        expect(() => {
+          tokenly.generateAccessToken(
+            { userId: '123' },
+            undefined,
+            { userAgent: 'test' } as any
+          );
+        }).toThrow('Invalid or empty context values');
+      });
+    });
+
+    describe('Environment Errors', () => {
+      let consoleWarnSpy: any;
+
+      beforeEach(() => {
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleWarnSpy.mockRestore();
+      });
+
+      test('should handle missing environment variables', () => {
+        const originalEnv = process.env;
+        process.env = {};
+
+        const tokenly = new Tokenly();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          '\x1b[33m%s\x1b[0m',
+          expect.stringContaining('WARNING: Using auto-generated secrets')
+        );
+
+        process.env = originalEnv;
+      });
+    });
+
+    describe('Token Errors', () => {
+      test('should throw TOKEN_EXPIRED error explicitly', async () => {
+        const shortLivedTokenly = new Tokenly({
+          accessTokenExpiry: '1ms'
+        });
+        
+        const token = shortLivedTokenly.generateAccessToken({ userId: '123' });
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        expect(() => shortLivedTokenly.verifyAccessToken(token.raw))
+          .toThrow(ErrorMessages[ErrorCode.TOKEN_EXPIRED]);
+      });
+
+      test('should throw INVALID_TOKEN error for malformed tokens', () => {
+        expect(() => tokenly.verifyAccessToken('malformed.token'))
+          .toThrow(ErrorMessages[ErrorCode.INVALID_TOKEN]);
+        
+        expect(() => tokenly.verifyAccessToken('malformed'))
+          .toThrow(ErrorMessages[ErrorCode.INVALID_TOKEN]);
+      });
+    });
+
+    describe('Payload Validation', () => {
+      const invalidPayloads = [
+        {
+          payload: null,
+          error: ErrorCode.INVALID_PAYLOAD,
+          description: 'null payload'
+        },
+        {
+          payload: {},
+          error: ErrorCode.EMPTY_PAYLOAD,
+          description: 'empty payload'
+        },
+        {
+          payload: { foo: 'bar' },
+          error: ErrorCode.MISSING_USER_ID,
+          description: 'missing userId'
+        },
+        {
+          payload: { userId: '' },
+          error: ErrorCode.INVALID_USER_ID,
+          description: 'empty userId'
+        },
+        {
+          payload: { userId: null },
+          error: ErrorCode.INVALID_USER_ID,
+          description: 'null userId'
+        },
+        {
+          payload: { userId: 123 },
+          error: ErrorCode.INVALID_USER_ID,
+          description: 'non-string userId'
+        }
+      ];
+
+      test.each(invalidPayloads)(
+        'should throw $error for $description',
+        ({ payload, error }) => {
+          expect(() => tokenly.generateAccessToken(payload as any))
+            .toThrow(ErrorMessages[error]);
+        }
+      );
     });
   });
 
@@ -859,4 +983,29 @@ describe('Tokenly Environment Variables', () => {
             expect.stringContaining('Instance ID:')
         );
     });
+});
+
+describe('Environment Errors', () => {
+  let consoleWarnSpy: any;
+
+  beforeEach(() => {
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
+  test('should handle missing environment variables', () => {
+    const originalEnv = process.env;
+    process.env = {};
+
+    const tokenly = new Tokenly();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      '\x1b[33m%s\x1b[0m',
+      expect.stringContaining('WARNING: Using auto-generated secrets')
+    );
+
+    process.env = originalEnv;
+  });
 });

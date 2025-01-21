@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { ErrorCode, throwError } from './utils/errorHandler.js';
 
 interface TokenlyOptions {
   secure?: boolean;
@@ -255,34 +256,34 @@ export class Tokenly {
 
   private validatePayload(payload: any): void {
     if (payload === null || typeof payload !== 'object') {
-      throw new Error('Payload must be an object');
+      throwError(ErrorCode.INVALID_PAYLOAD);
     }
     
     if (Object.keys(payload).length === 0) {
-      throw new Error('Payload cannot be empty');
+      throwError(ErrorCode.EMPTY_PAYLOAD);
     }
 
     if (!Object.prototype.hasOwnProperty.call(payload, 'userId')) {
-      throw new Error('Payload must contain a userId');
+      throwError(ErrorCode.MISSING_USER_ID);
     }
     
     if (payload.userId === null || payload.userId === undefined) {
-      throw new Error('userId cannot be null or undefined');
+      throwError(ErrorCode.INVALID_USER_ID);
     }
 
     if (typeof payload.userId !== 'string' || !payload.userId.trim()) {
-      throw new Error('userId cannot be empty');
+      throwError(ErrorCode.INVALID_USER_ID);
     }
 
     Object.entries(payload).forEach(([key, value]) => {
       if (value === null || value === undefined) {
-        throw new Error(`Payload property '${key}' cannot be null or undefined`);
+        throwError(ErrorCode.INVALID_PAYLOAD, `Payload property '${key}' cannot be null or undefined`);
       }
     });
 
     const payloadSize = JSON.stringify(payload).length;
     if (payloadSize > 8192) {
-      throw new Error('Payload size exceeds maximum allowed size');
+      throwError(ErrorCode.INVALID_PAYLOAD, 'Payload size exceeds maximum allowed size');
     }
   }
 
@@ -325,28 +326,38 @@ export class Tokenly {
    */
   public verifyAccessToken(
     token: string,
-    context?: { userAgent: string; ip: string; additionalData?: string }
+    context?: { userAgent: string; ip: string }
   ): TokenlyResponse {
     if (this.revokedTokens.has(token) || this.isTokenBlacklisted(token)) {
       throw new Error('Token has been revoked');
     }
 
-    const verified = jwt.verify(token, this.secretAccess, {
-      ...this.verifyOptions,
-      ignoreExpiration: false,
-      clockTolerance: 0
-    }) as TokenlyToken;
+    try {
+      const verified = jwt.verify(token, this.secretAccess, {
+        ...this.verifyOptions,
+        ignoreExpiration: false,
+        clockTolerance: 0
+      }) as TokenlyToken;
 
-    if (this.securityConfig.enableFingerprint && context) {
-      const currentFingerprint = this.generateFingerprint(context);
-      if (verified.fingerprint && verified.fingerprint !== currentFingerprint) {
-        throw new Error('Invalid token fingerprint');
+      if (this.securityConfig.enableFingerprint && context) {
+        const currentFingerprint = this.generateFingerprint(context);
+        if (verified.fingerprint && verified.fingerprint !== currentFingerprint) {
+          throw new Error('Invalid token fingerprint');
+        }
       }
-    }
 
-    const response = this.decodeWithReadableDates(token, verified);
-    this.cacheToken(token, response);
-    return response;
+      const response = this.decodeWithReadableDates(token, verified);
+      this.cacheToken(token, response);
+      return response;
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        throwError(ErrorCode.TOKEN_EXPIRED);
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throwError(ErrorCode.INVALID_TOKEN);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -676,7 +687,7 @@ export class Tokenly {
 
     if (!this.fingerprintCache.has(deviceKey)) {
       if (userDevices.size >= this.securityConfig.maxDevices) {
-        throw new Error('Maximum number of devices reached');
+        throwError(ErrorCode.MAX_DEVICES_REACHED);
       }
       this.fingerprintCache.set(deviceKey, fingerprint);
     }

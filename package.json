@@ -47,7 +47,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "commit": "git-cz",
-    "semantic-release": "semantic-release --branches main"
+    "semantic-release": "semantic-release --branches main",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -67,8 +70,11 @@
     "rollup-plugin-polyfill-node": "0.13.0",
     "semantic-release": "24.2.1",
     "ts-node": "10.9.2",
+    "typedoc": "0.27.6",
+    "typedoc-plugin-markdown": "4.4.1",
     "typescript": "5.7.3",
-    "vitest": "3.0.2"
+    "vitepress": "1.6.1",
+    "vitest": "3.0.3"
   },
   "directories": {
     "test": "tests"

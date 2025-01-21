@@ -20,6 +20,7 @@ logs/
 # Editor-specific directories
 .vscode/
 .idea/
+.vitepress/
 
 # Files and directories related to testing and development
 __tests__/

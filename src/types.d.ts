@@ -1,10 +1,40 @@
-// Configuración principal
+// Tipos genéricos sin dependencia de Express
+export interface TokenlyResponse {
+    raw: string;
+    payload: {
+        userId: string;
+        [key: string]: any;
+    };
+    cookieConfig?: {
+        name: string;
+        value: string;
+        options: CookieConfig;
+    };
+}
+
+export interface TokenRotationResponse {
+    accessToken: TokenlyResponse;
+    refreshToken: TokenlyResponse;
+}
+
+// Tipos base sin Express
+export interface TokenlyContext {
+    userAgent: string;
+    ip: string;
+}
+
+export interface TokenlyPayload {
+    userId: string;
+    [key: string]: any;
+}
+
+// Configuraciones
 export interface TokenlyConfig {
-  accessTokenExpiry?: string;
-  refreshTokenExpiry?: string;
-  securityConfig?: SecurityConfig;
-  rotationConfig?: RotationConfig;
-  cookieConfig?: CookieConfig;
+    accessTokenExpiry?: string;
+    refreshTokenExpiry?: string;
+    securityConfig?: SecurityConfig;
+    rotationConfig?: RotationConfig;
+    cookieConfig?: CookieConfig;
 }
 
 // Configuraciones específicas
@@ -28,20 +58,6 @@ export interface CookieConfig {
   domain?: string;
   path?: string;
   maxAge?: number;
-}
-
-// Respuesta de token
-export interface TokenlyResponse {
-  raw: string;
-  payload: {
-    userId: string;
-    [key: string]: any;
-  };
-  cookieConfig?: {
-    name: string;
-    value: string;
-    options: CookieConfig;
-  };
 }
 
 // Eventos
@@ -92,4 +108,27 @@ interface TokenSecurityAnalysis {
   issuedAt: Date;
   timeUntilExpiry: number;
   strength: 'weak' | 'medium' | 'strong';
+}
+
+// Nuevos tipos para endpoints
+export interface TokenlyLoginResponse {
+    token: string;
+}
+
+export interface TokenlyRefreshResponse {
+    token: string;
+}
+
+// Tipos para handlers
+export interface TokenlyRequestHandlers {
+    LoginHandler: RequestHandler<
+        {},
+        TokenlyLoginResponse,
+        { username: string; password: string }
+    >;
+    
+    RefreshHandler: RequestHandler<
+        {},
+        TokenlyRefreshResponse
+    >;
 }

@@ -17,14 +17,15 @@ export default async () => {
   const version = await getLatestVersion()
 
   return defineConfig({
+    base: '/tokenly/',
     title: "Tokenly",
     description: "Advanced JWT Token Management",
   
     head: [
-      ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo-light.svg', media: '(prefers-color-scheme: light)' }],
-      ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo-dark.svg', media: '(prefers-color-scheme: dark)' }],
-      ['link', { rel: 'icon', type: 'image/png', href: '/logo-light.png', media: '(prefers-color-scheme: light)' }],
-      ['link', { rel: 'icon', type: 'image/png', href: '/logo-dark.png', media: '(prefers-color-scheme: dark)' }],
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: '/tokenly/logo-light.svg', media: '(prefers-color-scheme: light)' }],
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: '/tokenly/logo-dark.svg', media: '(prefers-color-scheme: dark)' }],
+      ['link', { rel: 'icon', type: 'image/png', href: '/tokenly/logo-light.png', media: '(prefers-color-scheme: light)' }],
+      ['link', { rel: 'icon', type: 'image/png', href: '/tokenly/logo-dark.png', media: '(prefers-color-scheme: dark)' }],
       ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
       ['meta', { name: 'keywords', content: 'jwt, token, security, authentication, device fingerprinting' }],
       ['meta', { name: 'author', content: 'Nekzus' }],
@@ -74,19 +75,19 @@ export default async () => {
         }
 
         .vp-code-group .tabs label[data-title="npm"]::before {
-          background-image: url("/icons/npm.svg");
+          background-image: url("/tokenly/icons/npm.svg");
         }
 
         .vp-code-group .tabs label[data-title="pnpm"]::before {
-          background-image: url("/icons/pnpm.svg");
+          background-image: url("/tokenly/icons/pnpm.svg");
         }
 
         .vp-code-group .tabs label[data-title="yarn"]::before {
-          background-image: url("/icons/yarn.svg");
+          background-image: url("/tokenly/icons/yarn.svg");
         }
 
         .vp-code-group .tabs label[data-title="bun"]::before {
-          background-image: url("/icons/bun.svg");
+          background-image: url("/tokenly/icons/bun.svg");
         }
 
         /* Responsive code blocks */

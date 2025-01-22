@@ -50,7 +50,8 @@
     "semantic-release": "semantic-release --branches main",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "docs:deploy": "npm run docs:build && gh-pages -d docs/.vitepress/dist"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -65,6 +66,7 @@
     "@types/node": "22.10.7",
     "cz-conventional-changelog": "3.3.0",
     "dotenv": "16.4.7",
+    "gh-pages": "6.3.0",
     "rollup": "4.31.0",
     "rollup-plugin-dts": "6.1.1",
     "rollup-plugin-polyfill-node": "0.13.0",
@@ -86,7 +88,7 @@
   "bugs": {
     "url": "https://github.com/Nekzus/tokenly/issues"
   },
-  "homepage": "https://github.com/Nekzus/tokenly#readme",
+  "homepage": "https://github.com/Nekzus/tokenly/",
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"

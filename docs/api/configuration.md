@@ -4,7 +4,7 @@
 
 Configuration options for initializing the Tokenly instance.
 
-```typescript
+```ts
 interface TokenlyConfig {
     accessTokenExpiry?: string;
     refreshTokenExpiry?: string;
@@ -16,7 +16,7 @@ interface TokenlyConfig {
 
 ### Basic Configuration
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     accessTokenExpiry: '15m',    // 15 minutes (default)
     refreshTokenExpiry: '7d',    // 7 days (default)
@@ -25,7 +25,7 @@ const tokenly = new Tokenly({
 
 ### Security Configuration
 
-```typescript
+```ts
 interface SecurityConfig {
     enableFingerprint: boolean;     // Enable device fingerprinting
     enableBlacklist: boolean;       // Enable token blacklisting
@@ -35,7 +35,7 @@ interface SecurityConfig {
 ```
 
 #### Example
-```typescript
+```ts
 const tokenly = new Tokenly({
     securityConfig: {
         enableFingerprint: true,  // default: true
@@ -48,7 +48,7 @@ const tokenly = new Tokenly({
 
 ### Cookie Configuration
 
-```typescript
+```ts
 interface CookieConfig {
     secure?: boolean;
     httpOnly?: boolean;
@@ -60,7 +60,7 @@ interface CookieConfig {
 ```
 
 #### Example
-```typescript
+```ts
 const tokenly = new Tokenly({
     cookieConfig: {
         httpOnly: true,
@@ -74,7 +74,7 @@ const tokenly = new Tokenly({
 
 ### Rotation Configuration
 
-```typescript
+```ts
 interface RotationConfig {
     checkInterval?: number;        // Check interval in milliseconds
     rotateBeforeExpiry?: number;   // Time before expiry to rotate
@@ -83,7 +83,7 @@ interface RotationConfig {
 ```
 
 #### Example
-```typescript
+```ts
 const tokenly = new Tokenly({
     rotationConfig: {
         checkInterval: 60000,      // Check every minute
@@ -113,7 +113,7 @@ REFRESH_TOKEN_EXPIRY=7d
 ## Best Practices
 
 ### Production Settings
-```typescript
+```ts
 const tokenly = new Tokenly({
     accessTokenExpiry: '15m',
     refreshTokenExpiry: '7d',
@@ -138,7 +138,7 @@ const tokenly = new Tokenly({
 ```
 
 ### Development Settings
-```typescript
+```ts
 const tokenly = new Tokenly({
     accessTokenExpiry: '1h',     // Longer for testing
     refreshTokenExpiry: '7d',

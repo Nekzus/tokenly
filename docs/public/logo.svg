@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!-- Base Shield -->
+  <path d="M12 2L3 7v5c0 5.523 3.477 10 9 10s9-4.477 9-10V7l-9-5z" 
+    fill="#4F46E5" stroke="#312E81" stroke-width="1.5" 
+    stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Subtle Shield Pattern -->
+  <path d="M12 3L4.5 7.25v4.35c0 4.8 3.02 8.7 7.5 8.7s7.5-3.9 7.5-8.7V7.25L12 3z" 
+    fill="#6366F1" opacity="0.6"/>
+  
+  <!-- Simple Lines -->
+  <path d="M12 4L6.5 7.5M12 4l5.5 3.5" 
+    stroke="#818CF8" stroke-width="0.5" 
+    opacity="0.5"/>
+  
+  <!-- Lock Body with Subtle Gradient -->
+  <rect x="8" y="11" width="8" height="6" rx="1" 
+    fill="#F8FAFC" stroke="#312E81" stroke-width="1.5"/>
+  
+  <!-- Lock Shackle -->
+  <path d="M9 11V8a3 3 0 116 0v3" 
+    stroke="#312E81" stroke-width="1.5" 
+    stroke-linecap="round"/>
+  
+  <!-- JWT Text with Subtle Shadow -->
+  <text x="12" y="15" 
+    font-family="monospace" font-size="3.5" 
+    fill="#312E81" text-anchor="middle" 
+    font-weight="bold"
+    filter="url(#shadow)">JWT</text>
+    
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="0.5" stdDeviation="0.2" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+</svg> 

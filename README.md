@@ -15,16 +15,16 @@ _Enterprise-grade security by default for modern applications_
 
 ## Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Security Features](#security-features)
-- [API Reference](#api-reference)
-- [Environment Variables](#environment-variables--secrets)
-- [Best Practices](#best-practices)
-- [Contributing](#contributing)
-- [License](#license)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [Security Features](#%EF%B8%8F-security-features)
+- [API Reference](#-api-reference)
+- [Environment Variables](#-environment-variables--secrets)
+- [Best Practices](#-best-practices)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## ✨ Features
 

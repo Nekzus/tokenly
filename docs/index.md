@@ -5,14 +5,16 @@ layout: home
 hero:
   name: "Tokenly"
   text: "Advanced JWT Token Management"
-  tagline: Enterprise-grade security by default for modern applications
+  tagline: Enterprise-grade security with zero configuration
   image:
-    src: /logo.png
-    alt: Tokenly Logo
+    src: /logo.svg
+    alt: Tokenly Security Shield
+    light: /logo.svg
+    dark: /logo-dark.svg
   actions:
     - theme: brand
       text: Get Started
-      link: /guide/getting-started
+      link: /guide/what-is-tokenly
     - theme: alt
       text: API Reference
       link: /api/tokenly
@@ -21,79 +23,80 @@ hero:
       link: https://github.com/nekzus/tokenly
 
 features:
-  - icon: 🔐
-    title: Zero Configuration
-    details: Works out of the box with secure defaults. Auto-generates secure secrets if not provided.
+  - icon: 🛡️
+    title: Security First
+    details: Built with enterprise-grade security features including device fingerprinting, token rotation, and real-time threat detection.
+    link: /guide/security
+    linkText: Learn about security
     
-  - icon: 📱
-    title: Device Fingerprinting
-    details: Built-in device fingerprinting to prevent token theft and unauthorized access.
+  - icon: ⚡️
+    title: Zero Configuration
+    details: Get started in minutes with secure defaults. No complex setup required, just install and start building.
+    link: /guide/getting-started
+    linkText: Quick start guide
+    
+  - icon: 🎯
+    title: Type Safe
+    details: Full TypeScript support with comprehensive types. Catch errors at compile time and enhance your development experience.
+    link: /guide/type-safety
+    linkText: View types
     
   - icon: 🔄
-    title: Token Rotation
-    details: Automatic token rotation with configurable intervals and expiry warnings.
+    title: Token Lifecycle
+    details: Automatic token rotation, expiration management, and session control. Keep your authentication system secure and efficient.
+    link: /guide/security#token-rotation
+    linkText: Token management
     
-  - icon: 🛡️
-    title: Framework Agnostic
-    details: Works with any Node.js framework. Simple integration with Express, Fastify, or any HTTP server.
+  - icon: 📱
+    title: Multi-Device Support
+    details: Control and monitor user sessions across multiple devices. Automatic device fingerprinting and session management.
+    link: /guide/security#device-management
+    linkText: Device features
     
-  - icon: 🚫
-    title: Token Blacklisting
-    details: Built-in token blacklisting with automatic cleanup of expired tokens.
-    
-  - icon: 🖥️
-    title: Device Management
-    details: Control active sessions with configurable device limits and automatic revocation.
-
-  - icon: 🍪
-    title: Secure Cookies
-    details: HttpOnly cookies with secure defaults for refresh tokens.
-    
-  - icon: 📊
-    title: Security Events
-    details: Real-time monitoring of security events including fingerprint mismatches and device limits.
-
-  - icon: 🔍
-    title: Token Analysis
-    details: Built-in security analysis of tokens with strength assessment.
+  - icon: 🚀
+    title: High Performance
+    details: Optimized for production with minimal overhead. Fast token generation and validation with built-in caching.
+    link: /guide/getting-started#performance
+    linkText: Performance guide
 
 ---
 
-## Quick Start
+<style>
+.custom-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin: 2rem 0;
+}
 
-```bash
-npm install @nekzus/tokenly
-```
+.custom-block {
+  padding: 20px;
+  border-radius: 8px;
+  background-color: var(--vp-c-bg-soft);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-```typescript
-import { Tokenly } from '@nekzus/tokenly';
+.custom-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-const tokenly = new Tokenly({
-  accessTokenExpiry: '15m',
-  refreshTokenExpiry: '7d',
-  securityConfig: {
-    enableFingerprint: true,
-    enableBlacklist: true,
-    maxDevices: 5
-  }
-});
-```
+.custom-block h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-## Why Tokenly?
+.custom-block p {
+  margin-bottom: 0;
+  opacity: 0.8;
+}
 
-- 🔒 **Security First**: Built with security best practices by default
-- 🚀 **Performance**: Optimized token generation and validation
-- 📦 **Modern**: Full TypeScript support with comprehensive types
-- 🛠️ **Flexible**: Extensive configuration options
-- 📘 **Well Documented**: Comprehensive guides and API reference
-
-## Community
-
-<div class="vp-doc">
-  <div class="custom-block info">
-    <p>
-      🐛 <a href="https://github.com/nekzus/tokenly/issues">Issue Tracker</a><br>
-      📝 <a href="https://github.com/nekzus/tokenly/blob/main/CHANGELOG.md">Changelog</a>
-    </p>
-  </div>
-</div>
+.vp-doc {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+</style>

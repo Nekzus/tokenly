@@ -6,22 +6,31 @@ Tokenly is a JWT token management library that provides enterprise-grade securit
 
 ## Installation
 
-```bash
-# npm
-npm install @nekzus/tokenly
+::: code-group
 
-# yarn
-yarn add @nekzus/tokenly
-
-# pnpm
-pnpm add @nekzus/tokenly
+```sh [npm]
+$ npm install @nekzus/tokenly
 ```
+
+```sh [pnpm]
+$ pnpm add @nekzus/tokenly
+```
+
+```sh [yarn]
+$ yarn add @nekzus/tokenly
+```
+
+```sh [bun]
+$ bun add @nekzus/tokenly
+```
+
+:::
 
 ## Quick Start
 
 ### Basic Setup
 
-```typescript
+```ts
 import { Tokenly } from '@nekzus/tokenly';
 
 const tokenly = new Tokenly({
@@ -32,7 +41,7 @@ const tokenly = new Tokenly({
 
 ### Express Integration
 
-```typescript
+```ts
 import express from 'express';
 import { Tokenly, getClientIP } from '@nekzus/tokenly';
 import cookieParser from 'cookie-parser';
@@ -111,7 +120,7 @@ app.get('/protected', authenticateToken, (req, res) => {
 
 ### Authentication Middleware
 
-```typescript
+```ts
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -134,7 +143,7 @@ function authenticateToken(req, res, next) {
 
 ### Device Fingerprinting
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     securityConfig: {
         enableFingerprint: true,
@@ -153,7 +162,7 @@ tokenly.on('invalid_fingerprint', async (event) => {
 
 ### Token Rotation
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     rotationConfig: {
         checkInterval: 60000,      // Check every minute
@@ -174,7 +183,7 @@ const tokenly = new Tokenly({
 
 ### CORS Configuration
 
-```typescript
+```ts
 import cors from 'cors';
 
 app.use(cors({
@@ -185,7 +194,7 @@ app.use(cors({
 
 ### Production Setup
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     accessTokenExpiry: '5m',
     refreshTokenExpiry: '1d',
@@ -206,4 +215,4 @@ const tokenly = new Tokenly({
 ## Support
 
 - [GitHub Issues](https://github.com/nekzus/tokenly/issues)
-- [Documentation](https://tokenly.dev)
+

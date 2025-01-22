@@ -13,13 +13,29 @@ Tokenly is a secure JWT token manager that provides:
 
 ## Installation
 
-```bash
-npm install @nekzus/tokenly
+::: code-group
+
+```sh [npm]
+$ npm install @nekzus/tokenly
 ```
+
+```sh [pnpm]
+$ pnpm add @nekzus/tokenly
+```
+
+```sh [yarn]
+$ yarn add @nekzus/tokenly
+```
+
+```sh [bun]
+$ bun add @nekzus/tokenly
+```
+
+:::
 
 ## Quick Start
 
-```typescript
+```ts
 import { Tokenly } from '@nekzus/tokenly';
 
 // Initialize with configuration
@@ -71,7 +87,7 @@ app.post('/login', async (req, res) => {
 
 Generates a new access token with optional device fingerprinting.
 
-```typescript
+```ts
 generateAccessToken(
     payload: TokenlyPayload,
     options?: jwt.SignOptions,
@@ -89,7 +105,7 @@ generateAccessToken(
 
 #### Returns
 
-```typescript
+```ts
 interface TokenlyResponse {
     raw: string;              // JWT token string
     payload: TokenlyPayload;  // Decoded payload
@@ -105,7 +121,7 @@ interface TokenlyResponse {
 
 Generates a new refresh token with HttpOnly cookie configuration.
 
-```typescript
+```ts
 generateRefreshToken(
     payload: TokenlyPayload,
     options?: jwt.SignOptions
@@ -116,7 +132,7 @@ generateRefreshToken(
 
 Verifies an access token and validates device fingerprint if enabled.
 
-```typescript
+```ts
 verifyAccessToken(
     token: string,
     context?: TokenlyContext
@@ -127,13 +143,13 @@ verifyAccessToken(
 
 Rotates access and refresh tokens while maintaining security context.
 
-```typescript
+```ts
 rotateTokens(refreshToken: string): TokenRotationResponse
 ```
 
 #### Returns
 
-```typescript
+```ts
 interface TokenRotationResponse {
     accessToken: TokenlyResponse;
     refreshToken: TokenlyResponse;
@@ -144,7 +160,7 @@ interface TokenRotationResponse {
 
 ### Device Fingerprinting
 
-```typescript
+```ts
 const token = tokenly.generateAccessToken(
     { userId: '123' },
     undefined,
@@ -157,7 +173,7 @@ const token = tokenly.generateAccessToken(
 
 ### Token Analysis
 
-```typescript
+```ts
 const analysis = tokenly.analyzeTokenSecurity(token);
 console.log(analysis);
 /* Output:
@@ -174,7 +190,7 @@ console.log(analysis);
 
 ### Auto Rotation
 
-```typescript
+```ts
 // Enable auto rotation
 tokenly.enableAutoRotation({
     checkInterval: 60000,      // 1 minute
@@ -187,7 +203,7 @@ tokenly.disableAutoRotation();
 
 ## Event System
 
-```typescript
+```ts
 // Token revocation
 tokenly.on('token_revoked', (event: TokenRevokedEvent) => {
     console.log('Token revoked:', event);
@@ -211,7 +227,7 @@ tokenly.on('token_expiring', (event: TokenExpiringEvent) => {
 
 ## Error Handling
 
-```typescript
+```ts
 try {
     const verified = tokenly.verifyAccessToken(token);
 } catch (error) {

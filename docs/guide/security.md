@@ -8,7 +8,7 @@ Tokenly implements multiple security layers to protect your authentication syste
 
 Device fingerprinting helps prevent token theft by binding tokens to specific devices:
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     securityConfig: {
         enableFingerprint: true  // Enabled by default
@@ -28,7 +28,7 @@ const token = tokenly.generateAccessToken(
 
 The fingerprint is automatically validated during token verification:
 
-```typescript
+```ts
 try {
     const verified = tokenly.verifyAccessToken(token, {
         userAgent: req.headers['user-agent'],
@@ -43,7 +43,7 @@ try {
 
 Analyze token security characteristics:
 
-```typescript
+```ts
 const analysis = tokenly.analyzeTokenSecurity(token);
 /* Returns:
 {
@@ -61,7 +61,7 @@ const analysis = tokenly.analyzeTokenSecurity(token);
 
 Implement secure token rotation to prevent token reuse:
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     rotationConfig: {
         checkInterval: 60000,        // Check every minute
@@ -81,7 +81,7 @@ const tokens = tokenly.rotateTokens(currentRefreshToken);
 
 Control the number of active devices per user:
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     securityConfig: {
         maxDevices: 5,              // Maximum devices per user
@@ -94,7 +94,7 @@ const tokenly = new Tokenly({
 
 Monitor security-related activities:
 
-```typescript
+```ts
 // Invalid fingerprint detection
 tokenly.on('invalid_fingerprint', (event: InvalidFingerprintEvent) => {
     console.log('Invalid fingerprint:', event);
@@ -140,7 +140,7 @@ tokenly.on('token_expiring', (event: TokenExpiringEvent) => {
 
 Recommended security settings for production:
 
-```typescript
+```ts
 const tokenly = new Tokenly({
     accessTokenExpiry: '5m',      // Short-lived access tokens
     refreshTokenExpiry: '1d',     // Daily refresh
@@ -167,7 +167,7 @@ const tokenly = new Tokenly({
 
 Handle security-related errors:
 
-```typescript
+```ts
 try {
     const verified = tokenly.verifyAccessToken(token);
 } catch (error) {

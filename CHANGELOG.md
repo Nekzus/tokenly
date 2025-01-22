@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.2.1](https://github.com/Nekzus/tokenly/compare/v1.2.0...v1.2.1) (2025-01-22)
+
+
+### Bug Fixes
+
+* **docs:** update hash map references and enhance documentation structure with new assets and links ([37c5501](https://github.com/Nekzus/tokenly/commit/37c5501dae87367e591801b26ebed9c726ecca33))
+
 # [1.2.0](https://github.com/Nekzus/tokenly/compare/v1.1.0...v1.2.0) (2025-01-22)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@nekzus/tokenly",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Secure JWT token management with advanced device fingerprinting",
   "type": "module",
   "main": "dist/index.cjs",

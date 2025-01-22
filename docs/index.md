@@ -7,9 +7,9 @@ hero:
   text: "Advanced JWT Token Management"
   tagline: Enterprise-grade security with zero configuration
   image:
-    src: /logo.svg
+    src: /logo-light.svg
     alt: Tokenly Security Shield
-    light: /logo.svg
+    light: /logo-light.svg
     dark: /logo-dark.svg
   actions:
     - theme: brand

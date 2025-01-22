@@ -88,7 +88,7 @@
   "bugs": {
     "url": "https://github.com/Nekzus/tokenly/issues"
   },
-  "homepage": "https://github.com/Nekzus/tokenly/",
+  "homepage": "https://nekzus.github.io/tokenly/",
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"

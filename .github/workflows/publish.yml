@@ -52,7 +52,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     if: ${{github.ref == 'refs/heads/main'}}
-    needs: [quality]
+    needs: [publish]
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js

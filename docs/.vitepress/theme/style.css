@@ -1,0 +1,146 @@
+/* Custom styles */
+:root {
+  --vp-c-brand: #646cff;
+  --vp-c-brand-light: #747bff;
+  --vp-c-brand-lighter: #848cff;
+  --vp-c-brand-dark: #545bef;
+  --vp-c-brand-darker: #444bdf;
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #646cff 30%, #747bff 70%);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #646cff60 30%, #747bff60 70%);
+  --vp-home-hero-image-filter: blur(72px);
+
+  /* Custom container colors */
+  --vp-custom-block-tip-border: var(--vp-c-brand);
+  --vp-custom-block-tip-text: var(--vp-c-brand-darker);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-dimm);
+
+  /* Typography improvements */
+  --vp-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --vp-font-family-mono: 'Fira Code', Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Dark mode adjustments */
+.dark {
+  --vp-c-brand: #747bff;
+  --vp-c-brand-light: #848cff;
+  --vp-c-brand-dark: #646cff;
+}
+
+/* Enhanced code blocks */
+.vp-doc div[class*='language-'] {
+  border-radius: 8px;
+  margin: 16px 0;
+  background: var(--vp-code-block-bg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.vp-doc div[class*='language-']:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Enhanced typography */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 1em;
+  border-bottom: none;
+  position: relative;
+}
+
+.vp-doc h2::after,
+.vp-doc h3::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--vp-c-brand) 0%, transparent 100%);
+  opacity: 0.2;
+}
+
+/* Enhanced table styles */
+.vp-doc table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.vp-doc th {
+  font-weight: 600;
+  background-color: var(--vp-c-bg-soft);
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .vp-doc h1 {
+    font-size: 2rem;
+  }
+
+  .vp-doc h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Smooth animations */
+.vp-doc a,
+.vp-doc button {
+  transition: all 0.2s ease;
+}
+
+/* Custom containers */
+.custom-block {
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 16px 20px;
+  border-left-width: 4px;
+}
+
+/* Table improvements */
+.vp-doc th,
+.vp-doc td {
+  padding: 12px 16px;
+  border: 1px solid var(--vp-c-divider);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .custom-block {
+    margin: 12px 0;
+    padding: 12px 16px;
+  }
+}
+
+/* Smooth animations */
+.vp-doc a,
+.vp-doc button {
+  transition: all 0.2s ease;
+}
+
+/* Typography improvements */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 1em;
+} 

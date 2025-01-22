@@ -1,0 +1,68 @@
+# System-generated files and directories
+node_modules/
+src/
+.cache/
+.env
+
+# Local development configuration files
+config.js
+config.local.js
+tsconfig.json
+rollup.config.js
+
+# Log files and error logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+
+# Editor-specific directories
+.vscode/
+.idea/
+.vitepress/
+
+# Files and directories related to testing and development
+__tests__/
+test/
+tests/
+demo/
+
+# Configuration files
+.eslintrc.*
+.prettierrc
+
+# GitHub-specific files and directories
+.github/
+
+# Exclude .gitignore
+.gitignore
+
+# Documentation files
+docs/
+*.md
+CHANGELOG.md
+CONTRIBUTING.md
+
+# Build and coverage directories
+dist/
+coverage/
+.nyc_output/
+
+# Development and debug files
+*.map
+debug/
+.DS_Store
+
+# Package management files
+yarn.lock
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Additional development configs
+.babelrc
+.browserslistrc
+jest.config.js
+webpack.config.js

@@ -5,12 +5,12 @@ export enum ErrorCode {
   INVALID_FINGERPRINT = 'INVALID_FINGERPRINT',
   MAX_DEVICES_REACHED = 'MAX_DEVICES_REACHED',
   MAX_ROTATION_EXCEEDED = 'MAX_ROTATION_EXCEEDED',
-  
+
   INVALID_PAYLOAD = 'INVALID_PAYLOAD',
   EMPTY_PAYLOAD = 'EMPTY_PAYLOAD',
   MISSING_USER_ID = 'MISSING_USER_ID',
   INVALID_USER_ID = 'INVALID_USER_ID',
-  
+
   INVALID_CONTEXT = 'INVALID_CONTEXT',
 
   MISSING_ENV_VAR = 'MISSING_ENV_VAR'
@@ -38,7 +38,7 @@ export const ErrorMessages = {
   [ErrorCode.EMPTY_PAYLOAD]: 'Payload cannot be empty',
   [ErrorCode.MISSING_USER_ID]: 'Payload must contain a userId',
   [ErrorCode.INVALID_USER_ID]: 'Invalid userId format or value',
-  [ErrorCode.INVALID_CONTEXT]: 'Invalid or incomplete context data',
+  [ErrorCode.INVALID_CONTEXT]: 'Invalid or empty context values',
   [ErrorCode.MISSING_ENV_VAR]: 'Missing required environment variable'
 };
 

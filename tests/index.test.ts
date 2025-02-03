@@ -107,7 +107,7 @@ describe('Tokenly', () => {
     test('should detect invalid fingerprint', () => {
       const payload = { userId: '123' };
       const token = tokenly.generateAccessToken(payload, undefined, mockContext);
-      
+
       expect(() => {
         tokenly.verifyAccessToken(token.raw, {
           ...mockContext,
@@ -139,7 +139,7 @@ describe('Tokenly', () => {
       const payload = { userId: '123' };
       const refreshToken = tokenly.generateRefreshToken(payload);
       const rotated = tokenly.rotateTokens(refreshToken.raw);
-      
+
       expect(rotated.accessToken.raw).toBeDefined();
       expect(rotated.refreshToken.raw).toBeDefined();
     });
@@ -155,9 +155,9 @@ describe('Tokenly', () => {
     test('should handle token revocation', () => {
       const payload = { userId: '123' };
       const token = tokenly.generateAccessToken(payload);
-      
+
       tokenly.revokeToken(token.raw);
-      
+
       expect(() => {
         tokenly.verifyAccessToken(token.raw);
       }).toThrow('Token has been revoked');
@@ -179,11 +179,11 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      devices.slice(0, 2).forEach(device => 
+      devices.slice(0, 2).forEach(device =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
-      expect(() => 
+      expect(() =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
       ).toThrow('Maximum number of devices reached');
     });
@@ -213,9 +213,9 @@ describe('Tokenly', () => {
       const customTokenly = new Tokenly({
         accessTokenExpiry: '1ms'
       });
-      
+
       const token = customTokenly.generateAccessToken({ userId: '123' });
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       expect(() => customTokenly.verifyAccessToken(token.raw))
         .toThrow(ErrorMessages[ErrorCode.TOKEN_EXPIRED]);
@@ -237,11 +237,11 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      devices.slice(0, 2).forEach(device => 
+      devices.slice(0, 2).forEach(device =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
       );
 
-      expect(() => 
+      expect(() =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
       ).toThrow('Maximum number of devices reached');
     });
@@ -280,7 +280,7 @@ describe('Tokenly', () => {
       });
 
       const token = customTokenly.generateRefreshToken({ userId: '123' });
-      
+
       expect(token.cookieConfig).toBeDefined();
       expect(token.cookieConfig?.options).toMatchObject({
         secure: true,
@@ -325,7 +325,7 @@ describe('Tokenly', () => {
         );
 
         expect(token.payload.fingerprint).toBeDefined();
-        
+
         const key = `${context.userAgent}:${context.ip}`;
         tokensMap.set(key, token);
         fingerprints.add(token.payload.fingerprint);
@@ -421,13 +421,13 @@ describe('Tokenly', () => {
       };
 
       const token = tokenly.generateAccessToken({ userId: '123' }, undefined, context);
-      
+
       expect(() => {
         tokenly.verifyAccessToken(token.raw, context);
       }).not.toThrow();
 
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       expect(() => {
         tokenly.verifyAccessToken(token.raw, context);
       }).not.toThrow();
@@ -666,7 +666,7 @@ describe('Tokenly', () => {
       let consoleWarnSpy: any;
 
       beforeEach(() => {
-        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
       });
 
       afterEach(() => {
@@ -679,8 +679,9 @@ describe('Tokenly', () => {
 
         const tokenly = new Tokenly();
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          '\x1b[33m%s\x1b[0m',
-          expect.stringContaining('WARNING: Using auto-generated secrets')
+          '\x1b[33m%s\x1b[36m%s\x1b[0m',
+          expect.stringContaining('WARNING: Using auto-generated secrets'),
+          expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
         );
 
         process.env = originalEnv;
@@ -692,11 +693,11 @@ describe('Tokenly', () => {
         const shortLivedTokenly = new Tokenly({
           accessTokenExpiry: '1ms'
         });
-        
+
         const token = shortLivedTokenly.generateAccessToken({ userId: '123' });
-        
+
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         expect(() => shortLivedTokenly.verifyAccessToken(token.raw))
           .toThrow(ErrorMessages[ErrorCode.TOKEN_EXPIRED]);
       });
@@ -704,7 +705,7 @@ describe('Tokenly', () => {
       test('should throw INVALID_TOKEN error for malformed tokens', () => {
         expect(() => tokenly.verifyAccessToken('malformed.token'))
           .toThrow(ErrorMessages[ErrorCode.INVALID_TOKEN]);
-        
+
         expect(() => tokenly.verifyAccessToken('malformed'))
           .toThrow(ErrorMessages[ErrorCode.INVALID_TOKEN]);
       });
@@ -781,7 +782,7 @@ describe('Tokenly', () => {
     test('should get token info safely', () => {
       const token = tokenly.generateAccessToken({ userId: '123' });
       const info = tokenly.getTokenInfo(token.raw);
-      
+
       expect(info).toBeDefined();
       expect(info?.userId).toBe('123');
       expect(info?.expiresAt).toBeInstanceOf(Date);
@@ -799,7 +800,7 @@ describe('Tokenly', () => {
     test('should analyze token security', () => {
       const token = tokenly.generateAccessToken({ userId: '123' });
       const analysis = tokenly.analyzeTokenSecurity(token.raw);
-      
+
       expect(analysis).toHaveProperty('algorithm');
       expect(analysis).toHaveProperty('strength');
       expect(['weak', 'medium', 'strong']).toContain(analysis.strength);
@@ -807,17 +808,17 @@ describe('Tokenly', () => {
 
     test('should handle token events', async () => {
       let eventData: any = null;
-      
+
       tokenly.on('tokenRevoked', (data: any) => {
         eventData = data;
       });
-      
+
       const token = tokenly.generateAccessToken({ userId: '123' });
       tokenly.verifyAccessToken(token.raw);
       tokenly.revokeToken(token.raw);
-      
+
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       expect(eventData).toBeTruthy();
       expect(eventData.token).toBe(token.raw);
       expect(eventData.userId).toBe('123');
@@ -825,10 +826,10 @@ describe('Tokenly', () => {
 
     test('should cache token verifications', () => {
       const token = tokenly.generateAccessToken({ userId: '123' });
-      
+
       const firstVerification = tokenly.verifyAccessToken(token.raw);
       const secondVerification = tokenly.verifyAccessToken(token.raw);
-      
+
       expect(firstVerification).toEqual(secondVerification);
     });
 
@@ -844,14 +845,14 @@ describe('Tokenly', () => {
 
       const token = shortLivedTokenly.generateAccessToken({ userId: '123' });
       shortLivedTokenly.verifyAccessToken(token.raw);
-      
+
       const interval = shortLivedTokenly.enableAutoRotation({
         checkInterval: 50,
         rotateBeforeExpiry: 2000
       });
 
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       expect(eventData).toBeTruthy();
       expect(eventData.token).toBe(token.raw);
       expect(eventData.userId).toBe('123');
@@ -866,7 +867,7 @@ describe('Tokenly', () => {
 
       const interval = tokenly.enableAutoRotation();
       tokenly.disableAutoRotation();
-      
+
       expect(tokenly['autoRotationInterval']).toBeNull();
     });
   });
@@ -899,9 +900,9 @@ describe('Tokenly', () => {
     test('should allow same device to reconnect', () => {
       const userId = '123';
       const context = { userAgent: 'TestDevice', ip: '192.168.1.1' };
-      
+
       const token1 = tokenly.generateAccessToken({ userId }, undefined, context);
-      
+
       expect(() => {
         tokenly.generateAccessToken({ userId }, undefined, context);
       }).not.toThrow();
@@ -910,86 +911,88 @@ describe('Tokenly', () => {
 });
 
 describe('Tokenly Environment Variables', () => {
-    const originalEnv = process.env;
-    let consoleWarnSpy: any;
+  const originalEnv = process.env;
+  let consoleWarnSpy: any;
 
-    beforeEach(() => {
-        process.env = { ...originalEnv };
-        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    });
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+  });
 
-    afterEach(() => {
-        process.env = originalEnv;
-        consoleWarnSpy.mockRestore();
-    });
+  afterEach(() => {
+    process.env = originalEnv;
+    consoleWarnSpy.mockRestore();
+  });
 
-    test('should use environment variables when provided', () => {
-        process.env.JWT_SECRET_ACCESS = 'test-access-secret';
-        process.env.JWT_SECRET_REFRESH = 'test-refresh-secret';
+  test('should use environment variables when provided', () => {
+    process.env.JWT_SECRET_ACCESS = 'test-access-secret';
+    process.env.JWT_SECRET_REFRESH = 'test-refresh-secret';
 
-        const tokenly = new Tokenly();
+    const tokenly = new Tokenly();
 
-        expect(consoleWarnSpy).not.toHaveBeenCalled();
-        expect(tokenly.getToken()).toBeNull();
-    });
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(tokenly.getToken()).toBeNull();
+  });
 
-    test('should generate secure secrets when env vars are missing', () => {
-        delete process.env.JWT_SECRET_ACCESS;
-        delete process.env.JWT_SECRET_REFRESH;
+  test('should generate secure secrets when env vars are missing', () => {
+    delete process.env.JWT_SECRET_ACCESS;
+    delete process.env.JWT_SECRET_REFRESH;
 
-        const tokenly = new Tokenly();
+    const tokenly = new Tokenly();
 
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-            '\x1b[33m%s\x1b[0m',
-            expect.stringContaining('WARNING: Using auto-generated secrets')
-        );
-    });
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      '\x1b[33m%s\x1b[36m%s\x1b[0m',
+      expect.stringContaining('WARNING: Using auto-generated secrets'),
+      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
+    );
+  });
 
-    test('should generate different secrets for different instances', () => {
-        delete process.env.JWT_SECRET_ACCESS;
-        delete process.env.JWT_SECRET_REFRESH;
+  test('should generate different secrets for different instances', () => {
+    delete process.env.JWT_SECRET_ACCESS;
+    delete process.env.JWT_SECRET_REFRESH;
 
-        const tokenly1 = new Tokenly();
-        const tokenly2 = new Tokenly();
+    const tokenly1 = new Tokenly();
+    const tokenly2 = new Tokenly();
 
-        const token1 = tokenly1.generateAccessToken({ userId: '1', role: 'user' });
-        const token2 = tokenly2.generateAccessToken({ userId: '1', role: 'user' });
+    const token1 = tokenly1.generateAccessToken({ userId: '1', role: 'user' });
+    const token2 = tokenly2.generateAccessToken({ userId: '1', role: 'user' });
 
-        expect(token1.raw).not.toBe(token2.raw);
-    });
+    expect(token1.raw).not.toBe(token2.raw);
+  });
 
-    test('should maintain consistent secrets within same instance', () => {
-        delete process.env.JWT_SECRET_ACCESS;
-        delete process.env.JWT_SECRET_REFRESH;
-        const tokenly = new Tokenly();
+  test('should maintain consistent secrets within same instance', () => {
+    delete process.env.JWT_SECRET_ACCESS;
+    delete process.env.JWT_SECRET_REFRESH;
+    const tokenly = new Tokenly();
 
-        const token1 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
-        const token2 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
+    const token1 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
+    const token2 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
 
-        expect(() => tokenly.verifyAccessToken(token1.raw)).not.toThrow();
-        expect(() => tokenly.verifyAccessToken(token2.raw)).not.toThrow();
-    });
+    expect(() => tokenly.verifyAccessToken(token1.raw)).not.toThrow();
+    expect(() => tokenly.verifyAccessToken(token2.raw)).not.toThrow();
+  });
 
-    test('should warn only once per instance when using auto-generated secrets', () => {
-        delete process.env.JWT_SECRET_ACCESS;
-        delete process.env.JWT_SECRET_REFRESH;
+  test('should warn only once per instance when using auto-generated secrets', () => {
+    delete process.env.JWT_SECRET_ACCESS;
+    delete process.env.JWT_SECRET_REFRESH;
 
-        new Tokenly();
-        new Tokenly();
+    new Tokenly();
+    new Tokenly();
 
-        expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-            '\x1b[33m%s\x1b[0m',
-            expect.stringContaining('Instance ID:')
-        );
-    });
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      '\x1b[33m%s\x1b[36m%s\x1b[0m',
+      expect.stringContaining('WARNING: Using auto-generated secrets'),
+      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
+    );
+  });
 });
 
 describe('Environment Errors', () => {
   let consoleWarnSpy: any;
 
   beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -1002,8 +1005,9 @@ describe('Environment Errors', () => {
 
     const tokenly = new Tokenly();
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      '\x1b[33m%s\x1b[0m',
-      expect.stringContaining('WARNING: Using auto-generated secrets')
+      '\x1b[33m%s\x1b[36m%s\x1b[0m',
+      expect.stringContaining('WARNING: Using auto-generated secrets'),
+      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
     );
 
     process.env = originalEnv;

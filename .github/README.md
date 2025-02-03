@@ -4,7 +4,7 @@
 [![npm-version](https://img.shields.io/npm/v/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![npm-month](https://img.shields.io/npm/dm/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![npm-total](https://img.shields.io/npm/dt/@nekzus/tokenly.svg?style=flat)](https://www.npmjs.com/package/@nekzus/tokenly)
-[![Donate](https://img.shields.io/badge/donate-paypal-blue.svg?style=flat-square)](https://paypal.me/maseortega)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 <div align="center">
 

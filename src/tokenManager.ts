@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { ErrorCode, throwError } from './utils/errorHandler.js';
+import { ErrorCode, throwError, TokenlyError } from './utils/errorHandler.js';
 
 interface TokenlyOptions {
   secure?: boolean;
@@ -89,17 +89,18 @@ export class Tokenly {
   constructor(config?: TokenlyConfig) {
     this.instanceId = crypto.randomBytes(16).toString('hex');
 
-    this.secretAccess = process.env.JWT_SECRET_ACCESS || this.generateSecret('access');
-    this.secretRefresh = process.env.JWT_SECRET_REFRESH || this.generateSecret('refresh');
-
     if (!process.env.JWT_SECRET_ACCESS || !process.env.JWT_SECRET_REFRESH) {
       console.warn(
-        '\x1b[33m%s\x1b[0m',
+        '\x1b[33m%s\x1b[36m%s\x1b[0m',
         `WARNING: Using auto-generated secrets. This is secure but tokens will be invalidated on server restart. 
         For production, please set JWT_SECRET_ACCESS and JWT_SECRET_REFRESH environment variables.
-        Instance ID: ${this.instanceId}`
+        Instance ID: ${this.instanceId}\n        Documentation: `,
+        'https://nekzus.github.io/tokenly/guide/security.html#environment-variables'
       );
     }
+
+    this.secretAccess = process.env.JWT_SECRET_ACCESS || this.generateSecret('access');
+    this.secretRefresh = process.env.JWT_SECRET_REFRESH || this.generateSecret('refresh');
 
     this.accessTokenExpiry = config?.accessTokenExpiry || process.env.ACCESS_TOKEN_EXPIRY || '15m';
     this.refreshTokenExpiry = config?.refreshTokenExpiry || process.env.REFRESH_TOKEN_EXPIRY || '7d';
@@ -178,7 +179,7 @@ export class Tokenly {
     }
 
     const { iat, exp, ...payloadWithoutDates } = decoded;
-    
+
     const result: TokenlyResponse = {
       raw: token,
       payload: {
@@ -196,35 +197,35 @@ export class Tokenly {
    */
   private generateFingerprint(context: { userAgent: string; ip: string }): string {
     if (!context?.userAgent?.trim() || !context?.ip?.trim()) {
-        throw new Error('Invalid or empty context values');
+      throwError(ErrorCode.INVALID_CONTEXT, 'Invalid or empty context values');
     }
 
     const normalizedUA = context.userAgent
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
-    
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
     const normalizedIP = context.ip
-        .trim()
-        .toLowerCase()
-        .replace(/[^0-9.]/g, '');
+      .trim()
+      .toLowerCase()
+      .replace(/[^0-9.]/g, '');
 
     const uaHash = crypto
-        .createHash('sha256')
-        .update(`ua:${this.instanceId}:${normalizedUA}`)
-        .digest('hex');
-    
+      .createHash('sha256')
+      .update(`ua:${this.instanceId}:${normalizedUA}`)
+      .digest('hex');
+
     const ipHash = crypto
-        .createHash('sha256')
-        .update(`ip:${this.instanceId}:${normalizedIP}`)
-        .digest('hex');
+      .createHash('sha256')
+      .update(`ip:${this.instanceId}:${normalizedIP}`)
+      .digest('hex');
 
     const combinedData = `ua=${uaHash}|ip=${ipHash}`;
 
     return crypto
-        .createHash('sha256')
-        .update(combinedData)
-        .digest('hex');
+      .createHash('sha256')
+      .update(combinedData)
+      .digest('hex');
   }
 
   /**
@@ -232,11 +233,11 @@ export class Tokenly {
    */
   public revokeToken(token: string): void {
     if (!token) return;
-    
+
     try {
       const decoded = jwt.decode(token) as jwt.JwtPayload;
       this.revokedTokens.add(token);
-      
+
       this.emit('tokenRevoked', {
         token,
         userId: decoded?.userId,
@@ -258,7 +259,7 @@ export class Tokenly {
     if (payload === null || typeof payload !== 'object') {
       throwError(ErrorCode.INVALID_PAYLOAD);
     }
-    
+
     if (Object.keys(payload).length === 0) {
       throwError(ErrorCode.EMPTY_PAYLOAD);
     }
@@ -266,7 +267,7 @@ export class Tokenly {
     if (!Object.prototype.hasOwnProperty.call(payload, 'userId')) {
       throwError(ErrorCode.MISSING_USER_ID);
     }
-    
+
     if (payload.userId === null || payload.userId === undefined) {
       throwError(ErrorCode.INVALID_USER_ID);
     }
@@ -328,8 +329,12 @@ export class Tokenly {
     token: string,
     context?: { userAgent: string; ip: string }
   ): TokenlyResponse {
-    if (this.revokedTokens.has(token) || this.isTokenBlacklisted(token)) {
-      throw new Error('Token has been revoked');
+    if (this.revokedTokens.has(token)) {
+      throwError(ErrorCode.TOKEN_REVOKED);
+    }
+
+    if (this.isTokenBlacklisted(token)) {
+      throwError(ErrorCode.TOKEN_REVOKED, 'Token is blacklisted');
     }
 
     try {
@@ -342,7 +347,7 @@ export class Tokenly {
       if (this.securityConfig.enableFingerprint && context) {
         const currentFingerprint = this.generateFingerprint(context);
         if (verified.fingerprint && verified.fingerprint !== currentFingerprint) {
-          throw new Error('Invalid token fingerprint');
+          throwError(ErrorCode.INVALID_FINGERPRINT);
         }
       }
 
@@ -350,6 +355,8 @@ export class Tokenly {
       this.cacheToken(token, response);
       return response;
     } catch (error: any) {
+      if (error instanceof TokenlyError) throw error;
+
       if (error.name === 'TokenExpiredError') {
         throwError(ErrorCode.TOKEN_EXPIRED);
       }
@@ -372,7 +379,7 @@ export class Tokenly {
   ): TokenlyResponse {
     this.validatePayload(payload);
     const finalPayload: { [key: string]: any } = { ...payload };
-    
+
     delete (finalPayload as any).aud;
     delete (finalPayload as any).iss;
     delete (finalPayload as any).exp;
@@ -417,7 +424,7 @@ export class Tokenly {
     refreshToken: TokenlyResponse;
   } {
     if (!refreshToken || typeof refreshToken !== 'string') {
-      throw new Error('Invalid refresh token format');
+      throwError(ErrorCode.INVALID_TOKEN, 'Invalid refresh token format');
     }
 
     const verified = this.verifyRefreshToken(refreshToken);
@@ -425,16 +432,22 @@ export class Tokenly {
 
     const tokenId = refreshToken;
     const currentCount = this.rotationCounts.get(tokenId) || 0;
-    
+
     if (currentCount >= (this.rotationConfig.maxRotationCount || 2)) {
-      throw new Error('Maximum rotation count exceeded');
+      throwError(ErrorCode.MAX_ROTATION_EXCEEDED);
     }
-    
+
     this.rotationCounts.set(tokenId, currentCount + 1);
 
+    // Aseguramos que el payload tenga el formato correcto
+    const newPayload = {
+      ...payload,
+      iat: Math.floor(Date.now() / 1000)
+    };
+
     return {
-      accessToken: this.generateAccessToken(payload),
-      refreshToken: this.generateRefreshToken(payload)
+      accessToken: this.generateAccessToken(newPayload),
+      refreshToken: this.generateRefreshToken(newPayload)
     };
   }
 
@@ -474,7 +487,7 @@ export class Tokenly {
       const expirationTime = decoded.exp * 1000;
       const currentTime = Date.now();
       const timeUntilExpiry = expirationTime - currentTime;
-      
+
       return timeUntilExpiry < (thresholdMinutes * 60 * 1000);
     } catch {
       return false;
@@ -543,13 +556,13 @@ export class Tokenly {
    */
   public verifyRefreshTokenEnhanced(token: string): TokenlyResponse {
     if (!this.validateTokenFormat(token)) {
-      throw new Error('Invalid token format');
+      throwError(ErrorCode.INVALID_TOKEN, 'Invalid token format');
     }
 
     const verified = this.verifyRefreshToken(token);
-    
+
     if (this.isTokenExpiringSoon(token, 60)) {
-      throw new Error('Refresh token is about to expire');
+      throwError(ErrorCode.TOKEN_EXPIRED, 'Refresh token is about to expire');
     }
 
     return verified;
@@ -569,6 +582,7 @@ export class Tokenly {
         try {
           callback(data);
         } catch (error) {
+          console.error('Error executing event listener:', error);
         }
       });
     }
@@ -583,9 +597,9 @@ export class Tokenly {
   }
 
   public analyzeTokenSecurity(token: string): TokenSecurityAnalysis {
-    const decoded = jwt.decode(token, { complete: true }) as { 
-      header: { alg: string }, 
-      payload: TokenlyToken & { fingerprint?: string } 
+    const decoded = jwt.decode(token, { complete: true }) as {
+      header: { alg: string },
+      payload: TokenlyToken & { fingerprint?: string }
     };
     if (!decoded) throw new Error('Invalid token');
 
@@ -601,16 +615,16 @@ export class Tokenly {
 
   private calculateTokenStrength(decodedToken: any): 'weak' | 'medium' | 'strong' {
     let score = 0;
-    
+
     if (decodedToken.header.alg === 'HS512') score += 2;
     else if (decodedToken.header.alg === 'HS256') score += 1;
-    
+
     if (decodedToken.payload.fingerprint) score += 2;
-    
+
     const timeUntilExpiry = (decodedToken.payload.exp * 1000) - Date.now();
-    if (timeUntilExpiry < 15 * 60 * 1000) score += 1; 
+    if (timeUntilExpiry < 15 * 60 * 1000) score += 1;
     else if (timeUntilExpiry < 60 * 60 * 1000) score += 2;
-    
+
     return score <= 2 ? 'weak' : score <= 4 ? 'medium' : 'strong';
   }
 
@@ -656,12 +670,12 @@ export class Tokenly {
           }
         }
       } catch (error) {
-    
+        console.error('Error checking token expiration:', error);
       }
     });
   }
 
-  public enableAutoCleanup(interval: number = 3600000): void { 
+  public enableAutoCleanup(interval: number = 3600000): void {
     setInterval(() => {
       const now = Date.now();
       this.revokedTokens.forEach(token => {
@@ -687,7 +701,11 @@ export class Tokenly {
 
     if (!this.fingerprintCache.has(deviceKey)) {
       if (userDevices.size >= this.securityConfig.maxDevices) {
-        throwError(ErrorCode.MAX_DEVICES_REACHED);
+        throwError(ErrorCode.MAX_DEVICES_REACHED, {
+          userId,
+          currentDevices: userDevices.size,
+          maxDevices: this.securityConfig.maxDevices
+        });
       }
       this.fingerprintCache.set(deviceKey, fingerprint);
     }

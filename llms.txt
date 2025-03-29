@@ -1,0 +1,45 @@
+# Tokenly
+
+> Tokenly is a TypeScript library for secure JWT token management with HttpOnly cookie support, implementing best security practices for modern web applications. It provides a robust solution for token-based authentication with built-in protection against common security vulnerabilities.
+
+Key features and benefits:
+
+- **Security-First Design**: 
+  - JWT best practices implementation
+  - Automatic token rotation and invalidation
+  - Device fingerprinting for enhanced security
+  - Protection against XSS, CSRF, and token theft
+
+- **Developer Experience**:
+  - Full TypeScript support with strict types
+  - Comprehensive API documentation
+  - Intuitive error handling
+  - Extensive configuration options
+
+- **Production Ready**:
+  - Built-in performance optimizations
+  - Automatic token management
+  - Multi-device support
+  - Monitoring and logging capabilities
+
+## Documentation
+
+- [Quick Start Guide](https://nekzus.github.io/tokenly/guide/quickstart.html): Get started with Tokenly in under 5 minutes
+- [API Reference](https://nekzus.github.io/tokenly/api/): Complete API documentation with TypeScript types
+- [Security Guide](https://nekzus.github.io/tokenly/guide/security.html): Comprehensive security best practices
+- [Configuration Guide](https://nekzus.github.io/tokenly/guide/configuration.html): Detailed configuration options
+- [Migration Guide](https://nekzus.github.io/tokenly/guide/migration.html): Version migration instructions
+
+## Examples
+
+- [Basic Authentication](https://nekzus.github.io/tokenly/guide/examples/basic-auth.html): Complete authentication flow implementation
+- [Token Rotation](https://nekzus.github.io/tokenly/guide/examples/token-rotation.html): Automatic token rotation setup
+- [Multi-device Support](https://nekzus.github.io/tokenly/guide/examples/multi-device.html): Managing multiple device sessions
+- [Error Handling](https://nekzus.github.io/tokenly/guide/examples/error-handling.html): Proper error management patterns
+- [Custom Configuration](https://nekzus.github.io/tokenly/guide/examples/custom-config.html): Advanced configuration examples
+
+## Support
+
+- [GitHub Issues](https://github.com/nekzus/tokenly/issues): Bug reports and feature requests
+- [Security Policy](https://github.com/nekzus/tokenly/security): Security vulnerability reporting
+- [Changelog](https://github.com/nekzus/tokenly/blob/main/CHANGELOG.md): Version history and updates 

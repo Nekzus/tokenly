@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.4.2](https://github.com/Nekzus/tokenly/compare/v1.4.1...v1.4.2) (2025-03-29)
+
+
+### Bug Fixes
+
+* **docs:** enhance documentation build process and URL rewrites ([c7eec5f](https://github.com/Nekzus/tokenly/commit/c7eec5f7bd9d972a28de3b7a437eb03bd25c3196))
+
 ## [1.4.1](https://github.com/Nekzus/tokenly/compare/v1.4.0...v1.4.1) (2025-03-29)
 
 

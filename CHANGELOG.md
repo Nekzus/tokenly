@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.2](https://github.com/Nekzus/tokenly/compare/v1.5.1...v1.5.2) (2025-03-29)
+
+
+### Bug Fixes
+
+* update configuration for LLMs.txt detection ([a19abb1](https://github.com/Nekzus/tokenly/commit/a19abb1d545c777d51d9255818aff3000bab7365))
+
 ## [1.5.1](https://github.com/Nekzus/tokenly/compare/v1.5.0...v1.5.1) (2025-03-29)
 
 

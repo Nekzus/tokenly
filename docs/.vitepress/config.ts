@@ -32,8 +32,8 @@ export default async () => {
     },
 
     rewrites: {
-      '/llms.txt': '/public/llms.txt',
-      '/llms-full.txt': '/public/llms-full.txt'
+      '^/tokenly/llms.txt': '/llms.txt',
+      '^/tokenly/llms-full.txt': '/llms-full.txt'
     },
 
     head: [

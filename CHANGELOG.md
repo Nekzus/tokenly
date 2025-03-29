@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.5.0](https://github.com/Nekzus/tokenly/compare/v1.4.2...v1.5.0) (2025-03-29)
+
+
+### Bug Fixes
+
+* create tokenly directory before copying files ([ec98a1e](https://github.com/Nekzus/tokenly/commit/ec98a1e37645af159047815c17df0a01ad662a34))
+
+
+### Features
+
+* add llms-txt.json and update build script ([c7fdf26](https://github.com/Nekzus/tokenly/commit/c7fdf26ef3513eec7ea461e8706cdd042b1c85cd))
+
 ## [1.4.2](https://github.com/Nekzus/tokenly/compare/v1.4.1...v1.4.2) (2025-03-29)
 
 

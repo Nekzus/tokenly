@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](https://github.com/Nekzus/tokenly/compare/v1.2.1...v1.3.0) (2025-03-29)
+
+
+### Features
+
+* **coverage:** add Vitest V8 coverage configuration ([ac5fec7](https://github.com/Nekzus/tokenly/commit/ac5fec733f0645a4be126a7d434547c3dadf042e))
+
 ## [1.2.1](https://github.com/Nekzus/tokenly/compare/v1.2.0...v1.2.1) (2025-01-22)
 
 

@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { defineConfig } from 'vitepress'
 
 // Función para obtener la última versión de npm
@@ -20,6 +21,20 @@ export default async () => {
     base: '/tokenly/',
     title: "Tokenly",
     description: "Advanced JWT Token Management",
+
+    // Configuración para servir archivos estáticos
+    vite: {
+      resolve: {
+        alias: {
+          '@llms': resolve(__dirname, '../public')
+        }
+      }
+    },
+
+    rewrites: {
+      '/llms.txt': '/public/llms.txt',
+      '/llms-full.txt': '/public/llms-full.txt'
+    },
 
     head: [
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/tokenly/logo-light.svg', media: '(prefers-color-scheme: light)' }],
@@ -256,14 +271,5 @@ export default async () => {
         sh: "bash",
       }
     },
-
-    vite: {
-      publicDir: 'public',
-    },
-
-    rewrites: {
-      'llms.txt': '/llms.txt',
-      'llms-full.txt': '/llms-full.txt'
-    }
   })
 }

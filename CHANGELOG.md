@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.4.1](https://github.com/Nekzus/tokenly/compare/v1.4.0...v1.4.1) (2025-03-29)
+
+
+### Bug Fixes
+
+* **docs:** update URL rewrites in VitePress configuration ([35ce84b](https://github.com/Nekzus/tokenly/commit/35ce84bac857a9f4bc1d65a8a3ae0fe5b47263dd))
+
 # [1.4.0](https://github.com/Nekzus/tokenly/compare/v1.3.0...v1.4.0) (2025-03-29)
 
 

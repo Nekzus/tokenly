@@ -20,7 +20,7 @@ export default async () => {
     base: '/tokenly/',
     title: "Tokenly",
     description: "Advanced JWT Token Management",
-  
+
     head: [
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/tokenly/logo-light.svg', media: '(prefers-color-scheme: light)' }],
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/tokenly/logo-dark.svg', media: '(prefers-color-scheme: dark)' }],
@@ -255,6 +255,15 @@ export default async () => {
         js: "javascript",
         sh: "bash",
       }
+    },
+
+    vite: {
+      publicDir: 'public',
+    },
+
+    rewrites: {
+      'llms.txt': '/llms.txt',
+      'llms-full.txt': '/llms-full.txt'
     }
   })
 }

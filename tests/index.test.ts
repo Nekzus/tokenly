@@ -662,29 +662,52 @@ describe('Tokenly', () => {
       });
     });
 
-    describe('Environment Errors', () => {
+    describe('Environment Variables', () => {
       let consoleWarnSpy: any;
+      let originalEnv: NodeJS.ProcessEnv;
 
       beforeEach(() => {
+        originalEnv = { ...process.env };
         consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+        delete process.env.JWT_SECRET_ACCESS;
+        delete process.env.JWT_SECRET_REFRESH;
       });
 
       afterEach(() => {
+        process.env = originalEnv;
         consoleWarnSpy.mockRestore();
       });
 
-      test('should handle missing environment variables', () => {
-        const originalEnv = process.env;
+      test('should warn when environment variables are missing', () => {
         process.env = {};
 
-        const tokenly = new Tokenly();
+        new Tokenly();
+
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           '\x1b[33m%s\x1b[36m%s\x1b[0m',
           expect.stringContaining('WARNING: Using auto-generated secrets'),
           expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
         );
+      });
 
-        process.env = originalEnv;
+      test('should generate different secrets for different instances', () => {
+        const tokenly1 = new Tokenly();
+        const tokenly2 = new Tokenly();
+
+        const token1 = tokenly1.generateAccessToken({ userId: '1' });
+        const token2 = tokenly2.generateAccessToken({ userId: '1' });
+
+        expect(token1.raw).not.toBe(token2.raw);
+      });
+
+      test('should maintain consistent secrets within same instance', () => {
+        const tokenly = new Tokenly();
+
+        const token1 = tokenly.generateAccessToken({ userId: '1' });
+        const token2 = tokenly.generateAccessToken({ userId: '1' });
+
+        expect(() => tokenly.verifyAccessToken(token1.raw)).not.toThrow();
+        expect(() => tokenly.verifyAccessToken(token2.raw)).not.toThrow();
       });
     });
 
@@ -864,8 +887,6 @@ describe('Tokenly', () => {
       const tokenly = new Tokenly({
         accessTokenExpiry: '1s'
       });
-
-      const interval = tokenly.enableAutoRotation();
       tokenly.disableAutoRotation();
 
       expect(tokenly['autoRotationInterval']).toBeNull();
@@ -900,116 +921,9 @@ describe('Tokenly', () => {
     test('should allow same device to reconnect', () => {
       const userId = '123';
       const context = { userAgent: 'TestDevice', ip: '192.168.1.1' };
-
-      const token1 = tokenly.generateAccessToken({ userId }, undefined, context);
-
       expect(() => {
         tokenly.generateAccessToken({ userId }, undefined, context);
       }).not.toThrow();
     });
-  });
-});
-
-describe('Tokenly Environment Variables', () => {
-  const originalEnv = process.env;
-  let consoleWarnSpy: any;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-    consoleWarnSpy.mockRestore();
-  });
-
-  test('should use environment variables when provided', () => {
-    process.env.JWT_SECRET_ACCESS = 'test-access-secret';
-    process.env.JWT_SECRET_REFRESH = 'test-refresh-secret';
-
-    const tokenly = new Tokenly();
-
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
-    expect(tokenly.getToken()).toBeNull();
-  });
-
-  test('should generate secure secrets when env vars are missing', () => {
-    delete process.env.JWT_SECRET_ACCESS;
-    delete process.env.JWT_SECRET_REFRESH;
-
-    const tokenly = new Tokenly();
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      '\x1b[33m%s\x1b[36m%s\x1b[0m',
-      expect.stringContaining('WARNING: Using auto-generated secrets'),
-      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
-    );
-  });
-
-  test('should generate different secrets for different instances', () => {
-    delete process.env.JWT_SECRET_ACCESS;
-    delete process.env.JWT_SECRET_REFRESH;
-
-    const tokenly1 = new Tokenly();
-    const tokenly2 = new Tokenly();
-
-    const token1 = tokenly1.generateAccessToken({ userId: '1', role: 'user' });
-    const token2 = tokenly2.generateAccessToken({ userId: '1', role: 'user' });
-
-    expect(token1.raw).not.toBe(token2.raw);
-  });
-
-  test('should maintain consistent secrets within same instance', () => {
-    delete process.env.JWT_SECRET_ACCESS;
-    delete process.env.JWT_SECRET_REFRESH;
-    const tokenly = new Tokenly();
-
-    const token1 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
-    const token2 = tokenly.generateAccessToken({ userId: '1', role: 'user' });
-
-    expect(() => tokenly.verifyAccessToken(token1.raw)).not.toThrow();
-    expect(() => tokenly.verifyAccessToken(token2.raw)).not.toThrow();
-  });
-
-  test('should warn only once per instance when using auto-generated secrets', () => {
-    delete process.env.JWT_SECRET_ACCESS;
-    delete process.env.JWT_SECRET_REFRESH;
-
-    new Tokenly();
-    new Tokenly();
-
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      '\x1b[33m%s\x1b[36m%s\x1b[0m',
-      expect.stringContaining('WARNING: Using auto-generated secrets'),
-      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
-    );
-  });
-});
-
-describe('Environment Errors', () => {
-  let consoleWarnSpy: any;
-
-  beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-  });
-
-  afterEach(() => {
-    consoleWarnSpy.mockRestore();
-  });
-
-  test('should handle missing environment variables', () => {
-    const originalEnv = process.env;
-    process.env = {};
-
-    const tokenly = new Tokenly();
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      '\x1b[33m%s\x1b[36m%s\x1b[0m',
-      expect.stringContaining('WARNING: Using auto-generated secrets'),
-      expect.stringContaining('https://nekzus.github.io/tokenly/guide/security.html')
-    );
-
-    process.env = originalEnv;
   });
 });

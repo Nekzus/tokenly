@@ -18,6 +18,8 @@ export default async () => {
   const version = await getLatestVersion()
 
   return defineConfig({
+    outDir: '.vitepress/dist',
+    publicDir: 'public',
     base: '/tokenly/',
     title: "Tokenly",
     description: "Advanced JWT Token Management",
@@ -33,8 +35,8 @@ export default async () => {
 
     // Configuración para archivos llms.txt
     rewrites: {
-      '^/tokenly/llms\\.txt$': '/llms.txt',
-      '^/tokenly/llms-full\\.txt$': '/llms-full.txt'
+      'llms.txt': '/llms.txt',
+      'llms-full.txt': '/llms-full.txt'
     },
 
     head: [
@@ -49,6 +51,8 @@ export default async () => {
       ['meta', { property: 'og:description', content: 'Advanced JWT Token Management with Device Fingerprinting' }],
       ['meta', { 'http-equiv': 'Access-Control-Allow-Origin', content: '*' }],
       ['meta', { 'http-equiv': 'Content-Type', content: 'text/plain; charset=utf-8' }],
+      ['link', { rel: 'alternate', type: 'text/plain', href: '/tokenly/llms.txt', title: 'LLMs.txt' }],
+      ['link', { rel: 'alternate', type: 'text/plain', href: '/tokenly/llms-full.txt', title: 'LLMs-full.txt' }],
       ['style', {}, `
         :root {
           --vp-layout-max-width: 1440px;

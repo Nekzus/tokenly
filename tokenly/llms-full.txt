@@ -1,0 +1,305 @@
+# Tokenly
+
+> Tokenly is a TypeScript library for secure JWT token management with HttpOnly cookie support, implementing best security practices for modern web applications. It provides a robust solution for token-based authentication with built-in protection against common security vulnerabilities.
+
+## Core Features
+
+### Token Management
+- **Access and Refresh Tokens**
+  - Secure token generation with cryptographic signatures
+  - Automatic token validation and verification
+  - Configurable token expiration and renewal
+  - Token payload encryption support
+  
+- **Device Management**
+  - Sophisticated device fingerprinting
+  - Multi-device session tracking
+  - Device-specific token management
+  - Automatic device blacklisting on suspicious activity
+
+- **Security Features**
+  - HttpOnly cookie enforcement
+  - CSRF protection mechanisms
+  - XSS attack prevention
+  - Token theft detection
+  - Automatic session invalidation
+  - Rate limiting support
+
+### Advanced Capabilities
+
+#### Performance Optimization
+- Token caching with Redis support
+- Minimal token payload size
+- Efficient token validation
+- Optimized cookie handling
+- Background token rotation
+
+#### Monitoring & Debugging
+- Detailed error tracking
+- Token lifecycle events
+- Security incident logging
+- Performance metrics
+- Debug mode support
+
+#### Enterprise Features
+- Custom claim support
+- Role-based token management
+- Token scope validation
+- Audit logging
+- High availability support
+
+## Implementation Guide
+
+### Basic Setup
+```typescript
+import { Tokenly, TokenlyConfig } from 'tokenly';
+
+// Basic configuration
+const config: TokenlyConfig = {
+  accessTokenExpiry: '15m',
+  refreshTokenExpiry: '7d',
+  securityConfig: {
+    enableFingerprint: true,
+    maxDevices: 5,
+    enableRateLimiting: true
+  }
+};
+
+const tokenly = new Tokenly(config);
+```
+
+### Authentication Flow
+```typescript
+// Login implementation
+async function handleLogin(credentials: Credentials) {
+  try {
+    // Generate tokens
+    const { accessToken, refreshToken } = await tokenly.generateTokenPair({
+      userId: user.id,
+      roles: user.roles,
+      deviceInfo: {
+        userAgent: req.headers['user-agent'],
+        ip: req.ip
+      }
+    });
+
+    // Set cookies
+    tokenly.setTokenCookies(res, accessToken, refreshToken);
+
+    return { success: true, user: user.profile };
+  } catch (error) {
+    tokenly.handleAuthError(error);
+  }
+}
+
+// Token verification
+async function verifyAuth(req: Request, res: Response) {
+  try {
+    const verified = await tokenly.verifyAccessToken(req.cookies.accessToken, {
+      fingerprint: req.headers['x-device-fingerprint']
+    });
+
+    return verified.payload;
+  } catch (error) {
+    if (tokenly.isTokenExpiredError(error)) {
+      return await tokenly.handleTokenRefresh(req, res);
+    }
+    throw error;
+  }
+}
+```
+
+## Configuration Reference
+
+### Environment Variables
+```env
+# Required settings
+JWT_SECRET_ACCESS=your-secure-access-secret
+JWT_SECRET_REFRESH=your-secure-refresh-secret
+
+# Token expiration
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
+
+# Security settings
+ENABLE_FINGERPRINT=true
+MAX_DEVICES=5
+RATE_LIMIT_WINDOW=15m
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Redis configuration (optional)
+REDIS_URL=redis://localhost:6379
+REDIS_PREFIX=tokenly:
+```
+
+### Complete Configuration Interface
+```typescript
+interface TokenlyConfig {
+  // Token settings
+  accessTokenExpiry?: string;
+  refreshTokenExpiry?: string;
+  tokenAlgorithm?: 'HS256' | 'HS384' | 'HS512';
+  
+  // Cookie options
+  cookieOptions?: {
+    secure?: boolean;
+    sameSite?: 'strict' | 'lax' | 'none';
+    domain?: string;
+    path?: string;
+  };
+  
+  // Security configuration
+  securityConfig?: {
+    enableFingerprint?: boolean;
+    maxDevices?: number;
+    enableRateLimiting?: boolean;
+    rateLimitWindow?: string;
+    maxRequestsPerWindow?: number;
+    enableAuditLog?: boolean;
+  };
+  
+  // Cache configuration
+  cacheConfig?: {
+    enable?: boolean;
+    provider?: 'redis' | 'memory';
+    ttl?: string;
+  };
+  
+  // Error handling
+  errorConfig?: {
+    verbose?: boolean;
+    customErrors?: Record<string, string>;
+  };
+}
+```
+
+## Best Practices
+
+### Security Guidelines
+1. **Environment Configuration**
+   - Use strong secrets for JWT signing
+   - Enable HTTPS in production
+   - Configure secure cookie options
+   - Implement rate limiting
+
+2. **Token Management**
+   - Keep token expiry times short
+   - Implement automatic token rotation
+   - Use refresh token rotation
+   - Monitor failed authentication attempts
+
+3. **Error Handling**
+   - Implement proper error boundaries
+   - Log security incidents
+   - Use custom error messages
+   - Handle token refresh gracefully
+
+4. **Production Deployment**
+   - Enable Redis for token caching
+   - Configure proper CORS settings
+   - Set up monitoring and alerts
+   - Regular security audits
+
+### Performance Optimization
+1. **Token Size**
+   - Minimize payload size
+   - Use compression when needed
+   - Implement efficient caching
+   - Optimize token validation
+
+2. **Resource Management**
+   - Configure proper rate limits
+   - Implement connection pooling
+   - Use efficient database queries
+   - Enable response compression
+
+## Troubleshooting
+
+### Common Issues
+1. **Token Validation Failures**
+   - Check token expiration
+   - Verify fingerprint matching
+   - Validate token signature
+   - Check cookie settings
+
+2. **Performance Problems**
+   - Monitor token cache hits
+   - Check rate limiting
+   - Analyze token sizes
+   - Review database queries
+
+3. **Security Alerts**
+   - Investigate suspicious patterns
+   - Check device fingerprints
+   - Review audit logs
+   - Analyze error patterns
+
+## Docs
+
+### Essential Guides
+- [Getting Started](https://nekzus.github.io/tokenly/guide/getting-started.html): Initial setup and basic concepts
+- [API Reference](https://nekzus.github.io/tokenly/api/): Detailed API documentation
+- [Security Guide](https://nekzus.github.io/tokenly/guide/security.html): Security configurations and best practices
+
+### Tutorials
+- [Basic Authentication](https://nekzus.github.io/tokenly/guide/examples/basic-auth.html): Step by step implementation
+- [Token Rotation](https://nekzus.github.io/tokenly/guide/examples/token-rotation.html): Automatic rotation setup
+- [Fingerprinting](https://nekzus.github.io/tokenly/guide/examples/fingerprinting.html): Device fingerprinting implementation
+
+## Examples
+
+### Example Code
+```typescript
+import { Tokenly } from 'tokenly';
+
+const tokenly = new Tokenly({
+  securityConfig: {
+    enableFingerprint: true,
+    maxDevices: 5
+  }
+});
+
+// Access token generation
+const accessToken = tokenly.generateAccessToken(
+  { userId: '123' },
+  undefined,
+  { userAgent: 'Mozilla/5.0', ip: '192.168.1.1' }
+);
+
+// Token verification
+const verified = tokenly.verifyAccessToken(
+  accessToken.raw,
+  { userAgent: 'Mozilla/5.0', ip: '192.168.1.1' }
+);
+```
+
+## Configuration
+
+### Environment Variables
+```env
+JWT_SECRET_ACCESS=your-secure-access-secret
+JWT_SECRET_REFRESH=your-secure-refresh-secret
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
+```
+
+### TypeScript Configuration
+```typescript
+interface TokenlyConfig {
+  accessTokenExpiry?: string;
+  refreshTokenExpiry?: string;
+  cookieOptions?: TokenlyOptions;
+  securityConfig?: {
+    enableFingerprint?: boolean;
+    maxDevices?: number;
+  }
+}
+```
+
+## Best Practices
+
+1. Always use HTTPS in production
+2. Configure cookies as HttpOnly
+3. Implement device fingerprinting
+4. Use automatic token rotation
+5. Handle errors appropriately 

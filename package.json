@@ -49,7 +49,7 @@
     "commit": "git-cz",
     "semantic-release": "semantic-release --branches main",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs && cp docs/public/llms*.txt docs/.vitepress/dist/",
+    "docs:build": "vitepress build docs && cp docs/public/llms*.txt docs/.vitepress/dist/ && touch docs/.vitepress/dist/.nojekyll",
     "docs:preview": "vitepress preview docs",
     "docs:deploy": "BASE=/tokenly/ npm run docs:build && gh-pages -d docs/.vitepress/dist"
   },

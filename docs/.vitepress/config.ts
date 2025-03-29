@@ -31,9 +31,10 @@ export default async () => {
       }
     },
 
+    // Configuración para archivos llms.txt
     rewrites: {
-      '^/tokenly/llms.txt': '/llms.txt',
-      '^/tokenly/llms-full.txt': '/llms-full.txt'
+      '^/tokenly/llms\\.txt$': '/llms.txt',
+      '^/tokenly/llms-full\\.txt$': '/llms-full.txt'
     },
 
     head: [
@@ -46,6 +47,8 @@ export default async () => {
       ['meta', { name: 'author', content: 'Nekzus' }],
       ['meta', { property: 'og:title', content: 'Tokenly - JWT Token Management' }],
       ['meta', { property: 'og:description', content: 'Advanced JWT Token Management with Device Fingerprinting' }],
+      ['meta', { 'http-equiv': 'Access-Control-Allow-Origin', content: '*' }],
+      ['meta', { 'http-equiv': 'Content-Type', content: 'text/plain; charset=utf-8' }],
       ['style', {}, `
         :root {
           --vp-layout-max-width: 1440px;

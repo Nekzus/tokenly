@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "baseUrl": "https://nekzus.github.io/tokenly",
+    "files": {
+        "llms.txt": "/tokenly/llms.txt",
+        "llms-full.txt": "/tokenly/llms-full.txt"
+    }
+}

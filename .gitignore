@@ -77,4 +77,8 @@ coverage-report/
 /examples
 /examples/**
 
+# Cursor
+.cursorrules
+memory-bank/
+
 

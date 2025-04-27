@@ -19,7 +19,7 @@ export default async () => {
 
   return defineConfig({
     outDir: '.vitepress/dist',
-    publicDir: 'public',
+    srcDir: 'public',
     base: '/tokenly/',
     title: "Tokenly",
     description: "Advanced JWT Token Management",

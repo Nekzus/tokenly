@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.3](https://github.com/Nekzus/tokenly/compare/v1.5.2...v1.5.3) (2025-04-27)
+
+
+### Bug Fixes
+
+* add provenance field to package.json ([671ac1a](https://github.com/Nekzus/tokenly/commit/671ac1a53cee35ee5f7d49eebbfd497ea434c13d))
+* update VitePress configuration to change publicDir to srcDir ([ff6169e](https://github.com/Nekzus/tokenly/commit/ff6169e7ebfa567a91cc482c462011f5717eb4e3))
+
 ## [1.5.2](https://github.com/Nekzus/tokenly/compare/v1.5.1...v1.5.2) (2025-03-29)
 
 

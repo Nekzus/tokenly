@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.4](https://github.com/Nekzus/tokenly/compare/v1.5.3...v1.5.4) (2025-04-27)
+
+
+### Bug Fixes
+
+* enhance GitHub Actions workflow for npm authentication ([20b1a4a](https://github.com/Nekzus/tokenly/commit/20b1a4a46d37b5e1f8d50b60093d115d714fbd5a))
+* enhance npm configuration for provenance tracking ([e91f34f](https://github.com/Nekzus/tokenly/commit/e91f34f74c7a729e61e34dc5e051d168f740ab11))
+* update dependencies and add memory bank files to .gitignore ([e33e657](https://github.com/Nekzus/tokenly/commit/e33e65750ceeb9b3617bd1c115752f5aaf616f43))
+
 ## [1.5.3](https://github.com/Nekzus/tokenly/compare/v1.5.2...v1.5.3) (2025-04-27)
 
 

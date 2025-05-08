@@ -4,6 +4,7 @@
 [![npm-version](https://img.shields.io/npm/v/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![npm-month](https://img.shields.io/npm/dm/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![npm-total](https://img.shields.io/npm/dt/@nekzus/tokenly.svg?style=flat)](https://www.npmjs.com/package/@nekzus/tokenly)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nekzus/tokenly)
 [![Donate](https://img.shields.io/badge/donate-paypal-blue.svg?style=flat-square)](https://paypal.me/maseortega)
 
 <div align="center">

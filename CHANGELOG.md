@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.4](https://github.com/Nekzus/tokenly/compare/v1.7.3...v1.7.4) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** decouple semantic-release versioning from pnpm publish oidc step ([f577b55](https://github.com/Nekzus/tokenly/commit/f577b5563f512c37c09200a22f51e7f41027ffcb))
+* **ci:** pass dummy NPM_TOKEN to satisfy @semantic-release/npm precheck for oidc ([4a8e6cf](https://github.com/Nekzus/tokenly/commit/4a8e6cfac861e20a06efb6a221a14fdad148f031))
+* **ci:** use @semantic-release/npm plugin for pure oidc passwordless publishing ([76ed44e](https://github.com/Nekzus/tokenly/commit/76ed44e7c0dcd16dcd2d5a734b7abf1654c0b5b8))
+
 ## [1.7.3](https://github.com/Nekzus/tokenly/compare/v1.7.2...v1.7.3) (2026-08-02)
 
 

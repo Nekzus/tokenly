@@ -75,13 +75,34 @@ jobs:
       - name: Build Package
         run: pnpm run build
 
+      - name: Save previous version
+        id: prev_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Run Semantic Release (Versioning & Changelog)
         run: pnpm run semantic-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check release status
+        id: get_version
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          PREV_VERSION="${{ steps.prev_version.outputs.version }}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          if [ "$NEW_VERSION" = "$PREV_VERSION" ]; then
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No new version released by semantic-release."
+          else
+            echo "released=true" >> $GITHUB_OUTPUT
+            echo "📦 New version released: $NEW_VERSION"
+          fi
+
       - name: Publish Package to NPM (OIDC Trusted Publishing)
+        if: steps.get_version.outputs.released == 'true'
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
             pnpm publish --no-git-checks --provenance

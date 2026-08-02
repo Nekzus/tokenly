@@ -57,13 +57,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch Git Notes
+        run: git fetch origin +refs/notes/semantic-release:refs/notes/semantic-release || true
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: 'pnpm'
 
       - name: Install Dependencies
@@ -72,13 +75,19 @@ jobs:
       - name: Build Package
         run: pnpm run build
 
-      - name: Run Semantic Release (NPM OIDC Trusted Publishing & Verified GPG Commits)
+      - name: Run Semantic Release (Versioning & Changelog)
         run: pnpm run semantic-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: "unused"
-          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Publish Package to NPM (OIDC Trusted Publishing)
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            pnpm publish --no-git-checks --provenance
+          else
+            pnpm publish --no-git-checks --provenance --tag ${{ github.ref_name }}
+          fi
 
   docs:
     name: Deploy VitePress Documentation

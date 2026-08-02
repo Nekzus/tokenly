@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.1](https://github.com/Nekzus/tokenly/compare/v1.6.0...v1.6.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **release:** specify --access public for scoped package OIDC publishing and pass NPM_TOKEN fallback ([1fd133d](https://github.com/Nekzus/tokenly/commit/1fd133d5855ebc91383ef94ad32f4f6607b03c73))
+
 # [1.6.0](https://github.com/Nekzus/tokenly/compare/v1.5.4...v1.6.0) (2026-08-02)
 
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
-import { Tokenly } from '../src';
+import { Tokenly, getClientIP } from '../src';
 import { ErrorCode, ErrorMessages } from '../src/utils/errorHandler';
 
 describe('Tokenly', () => {
@@ -924,6 +924,46 @@ describe('Tokenly', () => {
       expect(() => {
         tokenly.generateAccessToken({ userId }, undefined, context);
       }).not.toThrow();
+    });
+  });
+
+  describe('getClientIP Helper', () => {
+    test('should return default IP if headers are null, undefined or not an object', () => {
+      expect(getClientIP(null as any)).toBe('0.0.0.0');
+      expect(getClientIP(undefined as any)).toBe('0.0.0.0');
+      expect(getClientIP('invalid' as any)).toBe('0.0.0.0');
+    });
+
+    test('should return custom default IP if specified and headers are missing', () => {
+      expect(getClientIP({}, '127.0.0.1')).toBe('127.0.0.1');
+    });
+
+    test('should extract IP from x-real-ip header', () => {
+      const headers = { 'x-real-ip': '  203.0.113.195  ' };
+      expect(getClientIP(headers)).toBe('203.0.113.195');
+    });
+
+    test('should extract first IP from x-forwarded-for header', () => {
+      const headers = { 'x-forwarded-for': ' 198.51.100.10, 198.51.100.11 ' };
+      expect(getClientIP(headers)).toBe('198.51.100.10');
+    });
+
+    test('should prioritize x-real-ip over x-forwarded-for if both are present', () => {
+      const headers = {
+        'x-real-ip': '203.0.113.195',
+        'x-forwarded-for': '198.51.100.10, 198.51.100.11'
+      };
+      expect(getClientIP(headers)).toBe('203.0.113.195');
+    });
+
+    test('should fallback to defaultIP if x-forwarded-for is empty or whitespace', () => {
+      const headers = { 'x-forwarded-for': '   ' };
+      expect(getClientIP(headers, '10.0.0.1')).toBe('10.0.0.1');
+    });
+
+    test('should fallback to defaultIP if first entry in x-forwarded-for is empty', () => {
+      const headers = { 'x-forwarded-for': ' , 198.51.100.11' };
+      expect(getClientIP(headers, '10.0.0.1')).toBe('10.0.0.1');
     });
   });
 });

@@ -3,7 +3,7 @@
 [![CI/CD & Publish](https://github.com/Nekzus/tokenly/actions/workflows/publish.yml/badge.svg)](https://github.com/Nekzus/tokenly/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
 [![SLSA Provenance Level 3](https://img.shields.io/badge/SLSA-Level%203-blue.svg)](https://slsa.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Nekzus/tokenly/blob/main/LICENSE.md)
 
 Secure JWT token management with advanced device fingerprinting for Node.js, Express, Fastify, and TypeScript applications.
 
@@ -170,8 +170,8 @@ JWT_SECRET_REFRESH=your_secure_refresh_token_secret
 
 ## Contributing
 
-See our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+See our [Contributing Guide](https://github.com/Nekzus/tokenly/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/Nekzus/tokenly/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-[MIT](LICENSE.md) © [Nekzus](https://github.com/Nekzus)
+[MIT](https://github.com/Nekzus/tokenly/blob/main/LICENSE.md) © [Nekzus](https://github.com/Nekzus)

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.5](https://github.com/Nekzus/tokenly/compare/v1.7.4...v1.7.5) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** use npm@latest via pnpm dlx for oidc trusted publishing ([7148328](https://github.com/Nekzus/tokenly/commit/7148328ccaf787eb1725b386d0b38ca3101f450c))
+
 ## [1.7.4](https://github.com/Nekzus/tokenly/compare/v1.7.3...v1.7.4) (2026-08-02)
 
 

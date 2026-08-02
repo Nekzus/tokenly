@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.6.0](https://github.com/Nekzus/tokenly/compare/v1.5.4...v1.6.0) (2026-08-02)
+
+
+### Features
+
+* **release:** adapt release pipeline with @semantic-release/exec for native OIDC Trusted Publishing without static NPM_TOKEN ([9174b59](https://github.com/Nekzus/tokenly/commit/9174b591092167be93fbab74fb05a46e49d1ba84))
+* **release:** integrate @semantic-release-extras/verified-git-commit for GitHub API verified commit signing and add permissions ([b22ca54](https://github.com/Nekzus/tokenly/commit/b22ca543c83a86edffc0b7d24ea3a3f5227ffa30))
+
 ## [1.5.4](https://github.com/Nekzus/tokenly/compare/v1.5.3...v1.5.4) (2025-04-27)
 
 

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.7.0](https://github.com/Nekzus/tokenly/compare/v1.6.1...v1.7.0) (2026-08-02)
+
+
+### Features
+
+* **release:** standardize npm OIDC Trusted Publishing with official npm CLI in semantic-release ([a0e042a](https://github.com/Nekzus/tokenly/commit/a0e042a643aeb7439da8ce3027f5b9cd76b02b0f))
+
 ## [1.6.1](https://github.com/Nekzus/tokenly/compare/v1.6.0...v1.6.1) (2026-08-02)
 
 

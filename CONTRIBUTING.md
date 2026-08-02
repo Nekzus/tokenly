@@ -1,163 +1,82 @@
 # Contributing to Tokenly
 
-First off, thanks for taking the time to contribute! 🎉
-
-## Table of Contents
-
-- [Code of Conduct](#code-of-conduct)
-- [How Can I Contribute?](#how-can-i-contribute)
-  - [Reporting Bugs](#reporting-bugs)
-  - [Suggesting Features](#suggesting-features)
-  - [Pull Requests](#pull-requests)
-- [Development Setup](#development-setup)
-- [Commit Guidelines](#commit-guidelines)
-- [Project Structure](#project-structure)
+Thank you for your interest in contributing to **Tokenly**! This document provides guidelines and commands to get started quickly while maintaining high code quality and security standards.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by our Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior through GitHub issues.
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## How Can I Contribute?
+## Package Manager Standard (100% pnpm)
 
-### Reporting Bugs
+This project strictly uses **`pnpm` (v10+)**. Do **NOT** use `npm` or `yarn`.
 
-Before creating bug reports, please check the issue list as you might find out that you don't need to create one. When you are creating a bug report, please include as many details as possible:
+### Prerequisites
 
-* Use a clear and descriptive title
-* Describe the exact steps which reproduce the problem
-* Provide specific examples to demonstrate the steps
-* Describe the behavior you observed after following the steps
-* Explain which behavior you expected to see instead and why
-* Include code samples and error messages if applicable
-* Specify the version of Tokenly you're using
-* Include your Node.js version and operating system
+- Node.js 20.x or 22.x LTS
+- `pnpm` 10.5.2+ (`corepack enable` or `npm install -g pnpm@10.5.2`)
 
-### Suggesting Features
+### Local Setup
 
-Before creating feature suggestions, please check the issue list as you might find out that you don't need to create one. When you are creating a feature suggestion, please include as many details as possible:
-
-* Use a clear and descriptive title
-* Provide a step-by-step description of the suggested feature
-* Provide specific examples to demonstrate the steps
-* Describe the current behavior and explain which behavior you expected to see instead
-* Explain why this feature would be useful to most Tokenly users
-
-### Pull Requests
-
-Please follow these steps to have your contribution considered:
-
-1. Follow the [commit guidelines](#commit-guidelines)
-2. Follow the [coding standards](#coding-standards)
-3. Update documentation as needed
-4. Add tests if applicable
-5. Make sure all tests pass
-6. Update TypeScript types if necessary
-
-## Development Setup
-
-1. Fork and clone the repository
-2. Install dependencies:
 ```bash
-npm install
+# Clone the repository
+git clone https://github.com/Nekzus/tokenly.git
+cd tokenly
+
+# Install dependencies cleanly
+pnpm install --frozen-lockfile
 ```
 
-3. Run tests:
+## Development Commands
+
+All development tasks use `pnpm`:
+
 ```bash
-npm test
+# Run unit tests with Vitest
+pnpm run test
+
+# Run tests in watch mode
+pnpm run test:watch
+
+# Lint and format code with Biome
+pnpm run lint
+pnpm run format
+
+# Build library artifacts (dist/)
+pnpm run build
+
+# Preview VitePress documentation locally
+pnpm run docs:dev
 ```
 
-4. Build the project:
+## Mandatory GPG Commit Signing
+
+All commits submitted to this repository **MUST be cryptographically signed using GPG**:
+
 ```bash
-npm run build
+git commit -S -m "feat(auth): add fingerprinted token rotation support"
 ```
 
-## Commit Guidelines
-
-We use [Conventional Commits](https://www.conventionalcommits.org/) and [semantic-release](https://semantic-release.gitbook.io/semantic-release/) for automated versioning and changelog generation. This means your commits must follow the specified format:
-
-### Commit Message Format
-Each commit message consists of a **header**, a **body** and a **footer**. The header has a special format that includes a **type** and a **subject**:
-
-```
-<type>: <subject>
-<BLANK LINE>
-<body>
-<BLANK LINE>
-<footer>
-```
-
-### Types
-* **feat**: A new feature
-* **fix**: A bug fix
-* **docs**: Documentation only changes
-* **style**: Changes that do not affect the meaning of the code
-* **refactor**: A code change that neither fixes a bug nor adds a feature
-* **perf**: A code change that improves performance
-* **test**: Adding missing tests or correcting existing tests
-* **chore**: Changes to the build process or auxiliary tools
-* **security**: Security-related changes
-
-Example:
-```
-feat: add token rotation functionality
-
-Implement automatic token rotation with configurable intervals.
-Includes rotation scheduling and token refresh handling.
-
-Closes #123
-```
-
-## Project Structure
-
-```
-tokenly/
-├── src/                # Source code
-│   ├── utils/         # Utility functions
-│   │   ├── ipHelper.ts    # IP address utilities
-│   │   └── errorHandler.ts # Error handling
-│   ├── types.ts       # TypeScript type definitions
-│   └── index.ts       # Main entry point
-├── tests/             # Test files
-├── docs/              # Documentation
-│   ├── api/          # API reference
-│   └── guide/        # User guide
-└── examples/          # Example implementations
-```
-
-### Coding Standards
-
-- Use TypeScript with strict mode enabled
-- Follow the existing code style (ESLint configuration)
-- Write meaningful variable and function names
-- Add JSDoc comments for public APIs
-- Keep functions small and focused
-- Write unit tests for new features
-- Maintain 100% type safety
-
-### Testing
-
-- Write tests for new features
-- Update tests for bug fixes
-- Ensure all tests pass:
+Verify local GPG configuration:
 ```bash
-npm test
+git config --global user.signingkey <YOUR_KEY_ID>
+git config --global commit.gpgsign true
 ```
-- Maintain test coverage above 90%
 
-### Documentation
+## Conventional Commits & SemVer
 
-- Update README.md for significant changes
-- Add JSDoc comments for new functions
-- Update API documentation in docs/api/
-- Update guides in docs/guide/ if needed
-- Include examples for new features
-- Update TypeScript types documentation
+Commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
-## Questions?
+| Commit Type | SemVer Impact | Description |
+| :--- | :--- | :--- |
+| `fix(scope):` | **PATCH** (`1.5.4` -> `1.5.5`) | Bug fix |
+| `feat(scope):` | **MINOR** (`1.5.4` -> `1.6.0`) | New feature |
+| `feat(scope)!:` | **MAJOR** (`1.5.4` -> `2.0.0`) | Breaking change |
+| `chore(scope):` | **No release** | Maintenance or configuration updates |
+| `docs(scope):` | **No release** | Documentation updates |
 
-Feel free to:
-- Open an issue for questions
-- Start a discussion in the GitHub repository
-- Check existing issues and discussions for answers
+## Branch Strategy
 
-Thank you for contributing to Tokenly! 🚀 
+- **`main`**: Production stable branch (`@latest` tag on npmjs.com).
+- **`beta`**: Feature-freeze pre-release testing branch (`@beta` tag on npmjs.com).
+- **`alpha`**: Active experimental pre-release branch (`@alpha` tag on npmjs.com).
+- **`feat/*` / `fix/*`**: Ephemeral feature branches for Pull Requests.

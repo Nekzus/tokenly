@@ -1,74 +1,108 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Tokenly
+name: CI/CD & Publish - Tokenly
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta, alpha]
   pull_request:
-    branches: (*)
+    branches: [main, beta, alpha]
 
 jobs:
   quality:
-    runs-on: ${{matrix.os}}
-
+    name: Code Quality & Tests
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: ["22"]
         os: [ubuntu-latest, windows-latest]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{matrix.node-version}}
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{matrix.node-version}}
-          cache: 'npm'
-      - run: npm ci
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint & Format Check
+        run: pnpm run lint
+
+      - name: Run Vitest Suite
+        run: pnpm run test
+
+      - name: Build Library
+        run: pnpm run build
 
   publish:
+    name: OIDC Trusted Release to npm & GitHub
     permissions:
       contents: write
       id-token: write
+      packages: write
     runs-on: ubuntu-latest
-    if: ${{github.ref == 'refs/heads/main'}}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/alpha') }}
     needs: [quality]
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{matrix.node-version}}
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{matrix.node-version}}
+          node-version: "22"
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
-      - run: npm ci
-      - run: npm run build
-      - run: npm run semantic-release
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Package
+        run: pnpm run build
+
+      - name: Run Semantic Release (OIDC Provenance)
+        run: pnpm run semantic-release
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
 
   docs:
+    name: Deploy VitePress Documentation
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    if: ${{github.ref == 'refs/heads/main'}}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [publish]
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Build documentation
-        run: npm run docs:build
+          node-version: "22"
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Documentation
+        run: pnpm run docs:build
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

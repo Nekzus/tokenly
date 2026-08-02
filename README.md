@@ -1,110 +1,94 @@
-# Tokenly 🔐
+# Tokenly
 
-[![Github Workflow](https://github.com/nekzus/tokenly/actions/workflows/publish.yml/badge.svg?event=push)](https://github.com/Nekzus/tokenly/actions/workflows/publish.yml)
-[![npm-version](https://img.shields.io/npm/v/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
-[![npm-month](https://img.shields.io/npm/dm/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
-[![npm-total](https://img.shields.io/npm/dt/@nekzus/tokenly.svg?style=flat)](https://www.npmjs.com/package/@nekzus/tokenly)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nekzus/tokenly)
-[![Donate](https://img.shields.io/badge/donate-paypal-blue.svg?style=flat-square)](https://paypal.me/maseortega)
+[![CI/CD & Publish](https://github.com/Nekzus/tokenly/actions/workflows/publish.yml/badge.svg)](https://github.com/Nekzus/tokenly/actions/workflows/publish.yml)
+[![npm version](https://img.shields.io/npm/v/@nekzus/tokenly.svg)](https://www.npmjs.com/package/@nekzus/tokenly)
+[![SLSA Provenance Level 3](https://img.shields.io/badge/SLSA-Level%203-blue.svg)](https://slsa.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
-<div align="center">
-
-**Advanced JWT Token Management with Device Fingerprinting**
-
-_Enterprise-grade security by default for modern applications_
-
-</div>
+Secure JWT token management with advanced device fingerprinting for Node.js, Express, Fastify, and TypeScript applications.
 
 ## Contents
 
-- [Features](#-features)
-- [Installation](#-installation)
-- [Quick Start](#-quick-start)
-- [Configuration](#-configuration)
-- [Security Features](#%EF%B8%8F-security-features)
-- [API Reference](#-api-reference)
-- [Environment Variables](#-environment-variables--secrets)
-- [Best Practices](#-best-practices)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Security Features](#security-features)
+- [API Reference](#api-reference)
+- [Environment Variables](#environment-variables)
+- [Best Practices](#best-practices)
+- [Contributing](#contributing)
+- [License](#license)
 
-## ✨ Features
+## Features
 
-- **Zero Configuration Required**: Works out of the box with secure defaults
-- **Device Fingerprinting**: Unique identification of devices to prevent token
-  theft
-- **Framework Agnostic**: Use with Express, Fastify, Koa, or any Node.js
-  framework
-- **TypeScript First**: Full type safety and excellent IDE support
-- **Production Ready**: Built for enterprise applications
+- **Zero Configuration Required**: Works out of the box with secure defaults.
+- **Device Fingerprinting**: Unique identification of devices to prevent token theft and session hijacking.
+- **Framework Agnostic**: Compatible with Express, Fastify, Koa, or any Node.js server.
+- **TypeScript First**: Full type safety and strict typings included natively.
+- **SLSA Level 3 Provenance**: All releases built and published via GitHub Actions OIDC Trusted Publishing with verifiable supply chain attestations.
 
-## 📦 Installation
+## Installation
 
-```bash
-npm install @nekzus/tokenly
-```
-
-### Required Dependencies
+Using `pnpm`:
 
 ```bash
-npm install cookie-parser
+pnpm add @nekzus/tokenly
 ```
 
-> ⚠️ **Important**: `cookie-parser` is required for secure handling of refresh
-> tokens with HttpOnly cookies.
+Required dependency for HttpOnly cookie handling:
 
-## 🚀 Quick Start
+```bash
+pnpm add cookie-parser
+```
+
+## Quick Start
 
 ```typescript
-import { getClientIP, Tokenly } from "@nekzus/tokenly";
+import { Tokenly, getClientIP } from "@nekzus/tokenly";
+import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 
-// Load environment variables
 dotenv.config();
 
-// Initialize Express
 const app = express();
-
-// Required middleware for refresh tokens
 app.use(cookieParser());
 
-// Initialize Tokenly
 const auth = new Tokenly({
-    accessTokenExpiry: "15m",
-    refreshTokenExpiry: "7d",
-    securityConfig: {
-        enableFingerprint: true,
-        maxDevices: 5,
-    },
+  accessTokenExpiry: "15m",
+  refreshTokenExpiry: "7d",
+  securityConfig: {
+    enableFingerprint: true,
+    maxDevices: 5,
+  },
 });
 
-// Generate token with fingerprinting
 app.post("/login", (req, res) => {
-    const token = auth.generateAccessToken(
-        { userId: "123", role: "user" },
-        undefined,
-        {
-            userAgent: req.headers["user-agent"] || "",
-            ip: getClientIP(req.headers),
-        },
-    );
-    res.json({ token });
+  const token = auth.generateAccessToken(
+    { userId: "123", role: "user" },
+    undefined,
+    {
+      userAgent: req.headers["user-agent"] || "",
+      ip: getClientIP(req.headers),
+    }
+  );
+  res.json({ token });
 });
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Basic Configuration
 
 ```typescript
 const auth = new Tokenly({
-    accessTokenExpiry: "15m", // 15 minutes
-    refreshTokenExpiry: "7d", // 7 days
-    securityConfig: {
-        enableFingerprint: true, // Enable device tracking
-        maxDevices: 5, // Max devices per user
-    },
+  accessTokenExpiry: "15m",
+  refreshTokenExpiry: "7d",
+  securityConfig: {
+    enableFingerprint: true,
+    maxDevices: 5,
+  },
 });
 ```
 
@@ -112,58 +96,46 @@ const auth = new Tokenly({
 
 ```typescript
 const auth = new Tokenly({
-    accessTokenExpiry: "5m", // Shorter token life
-    refreshTokenExpiry: "1d", // Daily refresh required
-    securityConfig: {
-        enableFingerprint: true, // Required for device tracking
-        enableBlacklist: true, // Enable token revocation
-        maxDevices: 3, // Strict device limit
-    },
+  accessTokenExpiry: "5m",
+  refreshTokenExpiry: "1d",
+  securityConfig: {
+    enableFingerprint: true,
+    enableBlacklist: true,
+    maxDevices: 3,
+  },
 });
 ```
 
-## 🛡️ Security Features
+## Security Features
 
 ### Device Fingerprinting
 
-- **User Agent**: Browser/client identification
-- **IP Address**: Client's IP address
-- **Cryptographic Salt**: Unique per instance
-- **Consistent Hashing**: Same device = Same fingerprint
-
-### Token Management
-
-- **Access Tokens**: Short-lived JWTs for API access
-- **Refresh Tokens**: Long-lived tokens for session maintenance
-- **Blacklisting**: Optional token revocation support
-- **Expiration Control**: Configurable token lifetimes
+- **User Agent**: Client identification header.
+- **IP Address**: Client IPv4 or IPv6 address.
+- **Cryptographic Salt**: Unique per instance.
+- **Consistent Hashing**: Same device = Same fingerprint.
 
 ### Security Events
 
 ```typescript
-// Invalid Fingerprint Detection
 auth.on("invalid_fingerprint", (event) => {
-    console.log(`Security Alert: Invalid fingerprint detected`);
-    console.log(`User: ${event.userId}`);
-    console.log(`IP: ${event.context.ip}`);
+  console.log(`Security Alert: Invalid fingerprint detected for user ${event.userId}`);
 });
 
-// Device Limit Reached
 auth.on("max_devices_reached", (event) => {
-    console.log(`Device limit reached for user: ${event.userId}`);
-    console.log(`Current devices: ${event.context.currentDevices}`);
+  console.log(`Device limit reached for user: ${event.userId}`);
 });
 ```
 
-## 📘 API Reference
+## API Reference
 
 ### Token Generation
 
 ```typescript
 const token = auth.generateAccessToken(
-    payload: { userId: string; role: string },
-    options?: { fingerprint?: string; deviceId?: string },
-    context?: { userAgent: string; ip: string }
+  payload: { userId: string; role: string },
+  options?: { fingerprint?: string; deviceId?: string },
+  context?: { userAgent: string; ip: string }
 );
 ```
 
@@ -175,120 +147,31 @@ import { getClientIP } from "@nekzus/tokenly";
 const clientIP = getClientIP(headers, defaultIP);
 ```
 
-Priority order:
+Header evaluation priority:
+1. `X-Real-IP`
+2. `X-Forwarded-For`
+3. Fallback IP
 
-1. `X-Real-IP`: Direct proxy IP
-2. `X-Forwarded-For`: First IP in proxy chain
-3. Default IP (if provided)
-4. Empty string (fallback)
-
-### Type Definitions
-
-```typescript
-interface AccessToken {
-    raw: string;
-    payload: {
-        userId: string;
-        role: string;
-        [key: string]: any;
-    };
-}
-
-interface InvalidFingerprintEvent {
-    type: "invalid_fingerprint";
-    userId: string;
-    token: string;
-    context: {
-        expectedFingerprint: string;
-        receivedFingerprint: string;
-        ip: string;
-        userAgent: string;
-        timestamp: string;
-    };
-}
-
-interface MaxDevicesEvent {
-    type: "max_devices_reached";
-    userId: string;
-    context: {
-        currentDevices: number;
-        maxAllowed: number;
-        ip: string;
-        userAgent: string;
-        timestamp: string;
-    };
-}
-```
-
-## 🔑 Environment Variables & Secrets
-
-### Required Variables
+## Environment Variables
 
 ```env
-# .env
 JWT_SECRET_ACCESS=your_secure_access_token_secret
 JWT_SECRET_REFRESH=your_secure_refresh_token_secret
 ```
 
-When environment variables are not provided, Tokenly automatically:
+> **Important**: When environment variables are omitted, Tokenly generates cryptographically secure secrets in memory. For production persistence, always supply permanent secrets via environment variables.
 
-- Generates cryptographically secure random secrets
-- Uses SHA-256 for secret generation
-- Implements secure entropy sources
-- Creates unique secrets per instance
+## Best Practices
 
-> ⚠️ **Important**: While auto-generated secrets are cryptographically secure,
-> they regenerate on each application restart. This means all previously issued
-> tokens will become invalid. For production environments, always provide
-> permanent secrets through environment variables.
+- Use short-lived access tokens (5-15 minutes).
+- Store refresh tokens in HttpOnly, Secure, SameSite cookies.
+- Enable fingerprinting for sensitive applications.
+- Enforce mandatory GPG signed commits for contributions.
 
-### Secret Generation
+## Contributing
 
-```bash
-# Generate secure random secrets
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
+See our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
 
-### Security Guidelines
+## License
 
-- Never commit secrets to version control
-- Use different secrets for development and production
-- Minimum length of 32 characters recommended
-- Rotate secrets periodically in production
-- Use secret management services when available
-
-## 🔐 Best Practices
-
-### Token Security
-
-- Use short-lived access tokens (5-15 minutes)
-- Implement refresh token rotation
-- Enable blacklisting for critical applications
-
-### Refresh Token Security
-
-- Use HttpOnly cookies for refresh tokens
-- Configure cookie-parser middleware
-- Enable secure and sameSite options in production
-- Implement proper CORS configuration when needed
-
-### Device Management
-
-- Enable fingerprinting for sensitive applications
-- Set reasonable device limits per user
-- Monitor security events
-
-### IP Detection
-
-- Configure proxy headers correctly
-- Use `X-Real-IP` for single proxy setups
-- Handle `X-Forwarded-For` for proxy chains
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md)
-for details.
-
-## 📄 License
-
-MIT © [Nekzus](https://github.com/Nekzus)
+[MIT](LICENSE.md) © [Nekzus](https://github.com/Nekzus)

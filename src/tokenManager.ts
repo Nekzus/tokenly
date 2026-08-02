@@ -119,7 +119,7 @@ export class Tokenly {
       issuer: 'tokenly-auth',
       audience: 'tokenly-client',
       ...config?.jwtOptions,
-    };
+    } as jwt.SignOptions;
 
     this.verifyOptions = {
       algorithms: [this.jwtOptions.algorithm as jwt.Algorithm],
@@ -312,7 +312,7 @@ export class Tokenly {
     const token = jwt.sign(finalPayload, this.secretAccess, {
       ...this.jwtOptions,
       ...options,
-      expiresIn: this.accessTokenExpiry,
+      expiresIn: this.accessTokenExpiry as jwt.SignOptions['expiresIn'],
     });
 
     const response = this.decodeWithReadableDates(token);
@@ -387,7 +387,7 @@ export class Tokenly {
 
     const token = jwt.sign(finalPayload, this.secretRefresh, {
       ...this.jwtOptions,
-      expiresIn: this.refreshTokenExpiry,
+      expiresIn: this.refreshTokenExpiry as jwt.SignOptions['expiresIn'],
     });
 
     const response = this.decodeWithReadableDates(token);
@@ -548,7 +548,7 @@ export class Tokenly {
       iat: Math.floor(Date.now() / 1000)
     };
 
-    return jwt.sign(payload, this.secretAccess, { expiresIn });
+    return jwt.sign(payload, this.secretAccess, { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] });
   }
 
   /**

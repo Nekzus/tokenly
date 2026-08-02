@@ -1,5 +1,9 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main",
+    { "name": "beta", "prerelease": "beta" },
+    { "name": "alpha", "prerelease": "alpha" }
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -20,4 +24,4 @@
     ],
     "@semantic-release/github"
   ]
-} 
+}

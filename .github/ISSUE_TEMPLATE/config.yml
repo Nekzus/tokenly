@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Official Tokenly Documentation
+    url: https://nekzus.github.io/tokenly/
+    about: Read the official documentation and integration guides for Tokenly.
+  - name: Security Policy & Vulnerability Disclosure
+    url: https://github.com/Nekzus/tokenly/blob/main/SECURITY.md
+    about: Read the security policy and report vulnerabilities responsibly.

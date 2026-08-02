@@ -17,7 +17,7 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "pnpm publish --access public --provenance --no-git-checks"
+        "publishCmd": "npx --yes npm@latest publish --provenance --access public"
       }
     ],
     [

@@ -1,6 +1,6 @@
 {
   "name": "@nekzus/tokenly",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "description": "Secure JWT token management with advanced device fingerprinting",
   "type": "module",
   "packageManager": "pnpm@10.5.2",

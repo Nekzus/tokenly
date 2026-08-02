@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.3](https://github.com/Nekzus/tokenly/compare/v1.7.2...v1.7.3) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** remove registry-url from setup-node to allow npm oidc trusted publishing ([16c6271](https://github.com/Nekzus/tokenly/commit/16c6271256d348f538b208b2feb4dafd5a18e971))
+
 ## [1.7.2](https://github.com/Nekzus/tokenly/compare/v1.7.1...v1.7.2) (2026-08-02)
 
 

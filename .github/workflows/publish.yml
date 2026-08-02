@@ -84,9 +84,9 @@ jobs:
       - name: Publish Package to NPM (OIDC Trusted Publishing)
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            pnpm dlx npm@latest publish --provenance --access public
+            pnpm publish --no-git-checks --provenance
           else
-            pnpm dlx npm@latest publish --provenance --access public --tag ${{ github.ref_name }}
+            pnpm publish --no-git-checks --provenance --tag ${{ github.ref_name }}
           fi
 
   docs:

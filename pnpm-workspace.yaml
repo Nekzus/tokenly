@@ -4,3 +4,22 @@ packages:
 allowBuilds:
   '@biomejs/biome': true
   esbuild: true
+
+minimumReleaseAge: 0
+
+overrides:
+  ajv: '>=8.18.0'
+  brace-expansion: '>=1.1.17'
+  diff: '>=4.0.4'
+  esbuild: '>=0.25.0'
+  fast-uri: '>=3.1.4'
+  handlebars: '>=4.7.9'
+  js-yaml: '>=4.3.0'
+  lodash: '>=4.17.23'
+  lodash-es: '>=4.17.23'
+  mdast-util-to-hast: '>=13.2.1'
+  minimatch: '>=3.1.4'
+  picomatch: '>=2.3.2'
+  postcss: '>=8.5.18'
+  tmp: '>=0.2.6'
+  vite: '>=5.4.21 <6.0.0'

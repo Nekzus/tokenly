@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.7](https://github.com/Nekzus/tokenly/compare/v1.7.6...1.7.7) (2026-08-02)
+
+### Bug Fixes
+
+* **ci:** conditional execution of pnpm publish only when semantic-release creates a new version ([20014e5](https://github.com/Nekzus/tokenly/commit/20014e598e77ae4d7ba3ca6ef1dc6a724c820a26))
+
 ## [1.7.6](https://github.com/Nekzus/tokenly/compare/v1.7.5...v1.7.6) (2026-08-02)
 
 

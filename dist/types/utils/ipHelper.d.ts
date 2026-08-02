@@ -1,4 +1,4 @@
-import { Headers } from '../types.js';
+import type { Headers } from '../types.js';
 /**
  * Helper function to get the real client IP from various headers
  * @param headers Object containing HTTP headers

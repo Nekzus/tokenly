@@ -179,9 +179,9 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      devices.slice(0, 2).forEach(device =>
-        customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
-      );
+      devices.slice(0, 2).forEach(device => {
+        customTokenly.generateAccessToken({ userId: '123' }, undefined, device);
+      });
 
       expect(() =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])
@@ -237,9 +237,9 @@ describe('Tokenly', () => {
         { userAgent: 'Safari/14.0', ip: '192.168.1.3' }
       ];
 
-      devices.slice(0, 2).forEach(device =>
-        customTokenly.generateAccessToken({ userId: '123' }, undefined, device)
-      );
+      devices.slice(0, 2).forEach(device => {
+        customTokenly.generateAccessToken({ userId: '123' }, undefined, device);
+      });
 
       expect(() =>
         customTokenly.generateAccessToken({ userId: '123' }, undefined, devices[2])

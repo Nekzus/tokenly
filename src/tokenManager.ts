@@ -124,7 +124,7 @@ export class Tokenly {
     this.verifyOptions = {
       algorithms: [this.jwtOptions.algorithm as jwt.Algorithm],
       issuer: this.jwtOptions.issuer,
-      audience: this.jwtOptions.audience,
+      audience: this.jwtOptions.audience as jwt.VerifyOptions['audience'],
       clockTolerance: 30,
     };
 

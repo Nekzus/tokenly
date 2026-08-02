@@ -14,7 +14,12 @@
         "changelogTitle": "# Changelog\n\nAll notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines."
       }
     ],
-    "@semantic-release/npm",
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "pnpm publish --provenance --no-git-checks"
+      }
+    ],
     [
       "@semantic-release-extras/verified-git-commit",
       {

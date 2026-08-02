@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.1](https://github.com/Nekzus/tokenly/compare/v1.7.0...v1.7.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **release:** add prepareCmd to bump package.json version to nextRelease.version before OIDC publish ([094d9b3](https://github.com/Nekzus/tokenly/commit/094d9b36f11886a042c25f973b1af6f27fe9a30c))
+
 # [1.7.0](https://github.com/Nekzus/tokenly/compare/v1.6.1...v1.7.0) (2026-08-02)
 
 

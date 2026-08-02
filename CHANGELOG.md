@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.7.6](https://github.com/Nekzus/tokenly/compare/v1.7.5...v1.7.6) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** use direct pnpm publish to preserve github action oidc environment variables ([06486a0](https://github.com/Nekzus/tokenly/commit/06486a02b2941cf6279f311a1f636960aa369258))
+
 ## [1.7.5](https://github.com/Nekzus/tokenly/compare/v1.7.4...v1.7.5) (2026-08-02)
 
 
